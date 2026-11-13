@@ -1,0 +1,2042 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>First Dance Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf6f2; --surface:#ffffff; --surface-2:#f4ede7; --ink:#2a2025; --muted:#7b6d72; --line:#e7ddd6;
+  --accent:#b4486b; --accent-ink:#ffffff; --accent-soft:#f7e1e8; --wave:#d3c6cb; --wave-played:#b4486b;
+  --lane:#faf7f4; --shadow:0 1px 2px rgba(60,20,40,.05),0 10px 30px rgba(60,20,40,.07);
+  --serif:"Cormorant Garamond",Georgia,serif; --sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#16111a; --surface:#211a25; --surface-2:#2a2230; --ink:#f4ebf1; --muted:#a999a4; --line:#3a2f40;
+    --accent:#ee86a6; --accent-ink:#1b0f15; --accent-soft:#3c2433; --wave:#4d4054; --wave-played:#ee86a6;
+    --lane:#1c1620; --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16111a; --surface:#211a25; --surface-2:#2a2230; --ink:#f4ebf1; --muted:#a999a4; --line:#3a2f40;
+  --accent:#ee86a6; --accent-ink:#1b0f15; --accent-soft:#3c2433; --wave:#4d4054; --wave-played:#ee86a6;
+  --lane:#1c1620; --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35); color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans);-webkit-font-smoothing:antialiased;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 16px 48px}
+
+/* header */
+.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.brand{flex:1 1 320px;min-width:0}
+.title-input{font:600 34px/1.1 var(--serif);border:0;background:transparent;padding:2px 0;width:100%;outline:none;border-bottom:1px dashed transparent}
+.title-input:hover,.title-input:focus{border-bottom-color:var(--line)}
+.song{color:var(--muted);font-size:13px;display:flex;gap:10px;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saved{font-size:12px;color:var(--muted);opacity:0;transition:opacity .3s}
+.saved.on{opacity:1}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 13px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500;font-size:13px;white-space:nowrap;user-select:none}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.ghost{background:transparent}
+.btn.sm{height:28px;padding:0 9px;font-size:12px;border-radius:7px}
+.btn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.btn:focus-visible,.icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.icon-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer;display:inline-grid;place-items:center}
+.icon-btn:hover{border-color:var(--muted)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;margin-bottom:14px}
+.now{padding:20px 22px 18px;position:relative;overflow:hidden;--c:var(--accent)}
+.now::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--c);opacity:.9}
+.label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;gap:10px;align-items:center}
+.now-name{font:600 44px/1.05 var(--serif);margin:6px 0 6px;min-height:46px;word-break:break-word}
+.now-name.idle{color:var(--muted);font-style:italic;font-weight:500}
+.now-notes{font-size:16px;color:var(--ink);opacity:.85;white-space:pre-wrap;min-height:22px;max-height:7.5em;overflow:auto}
+.bar{height:6px;border-radius:6px;background:var(--surface-2);margin-top:16px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:var(--c);border-radius:6px}
+.side{display:grid;grid-template-rows:auto 1fr;gap:14px}
+.countbox{padding:16px 18px}
+.dots{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:10px}
+.dots span{height:38px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;font-weight:600;color:var(--muted);transition:background .06s,transform .06s}
+.dots span.on{background:var(--accent);color:var(--accent-ink);transform:scale(1.06)}
+.dots span.past{background:var(--accent-soft);color:var(--ink)}
+.count-hint{font-size:12px;color:var(--muted);margin-top:8px;min-height:18px}
+.next{padding:16px 18px;--c:var(--line)}
+.next-name{font:600 24px/1.15 var(--serif);margin-top:4px;word-break:break-word}
+.next-notes{font-size:13px;color:var(--muted);white-space:pre-wrap;max-height:3em;overflow:hidden}
+.next .in{margin-left:auto;font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0;font-weight:600}
+.next.soon{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft),var(--shadow)}
+.next.soon .in{color:var(--accent)}
+
+/* transport */
+.transport{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;margin-bottom:14px}
+.play{width:46px;height:46px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer;display:grid;place-items:center}
+.play:hover{filter:brightness(1.06)}
+.time{font:600 18px var(--sans);font-variant-numeric:tabular-nums;min-width:150px}
+.time small{color:var(--muted);font-weight:500;font-size:13px}
+.sep{width:1px;height:28px;background:var(--line)}
+.field{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);font-weight:500}
+.field input[type=number],.field select{height:30px;border:1px solid var(--line);border-radius:7px;background:var(--surface);padding:0 6px;color:var(--ink)}
+.field input[type=number]{width:70px}
+.loop-badge{display:none;align-items:center;gap:6px;background:var(--accent-soft);border:1px solid var(--accent);border-radius:999px;padding:3px 4px 3px 10px;font-size:12px;font-weight:600}
+.loop-badge.on{display:inline-flex}
+.loop-badge button{border:0;background:transparent;cursor:pointer;width:20px;height:20px;border-radius:50%}
+.spacer{flex:1}
+
+/* timeline */
+.tl-card{padding:10px 12px 12px;margin-bottom:14px}
+.tl-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.tl-tools input[type=range]{width:130px;accent-color:var(--accent)}
+.tl{position:relative;height:214px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--lane)}
+.tl canvas{position:absolute;left:0;top:0;width:100%;height:200px;pointer-events:none}
+.tl-scroll{position:absolute;inset:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+.tl-inner{position:relative;height:200px;touch-action:pan-x;cursor:text}
+.playhead{position:absolute;top:0;height:200px;width:2px;margin-left:-1px;background:var(--ink);pointer-events:none;z-index:3}
+.barh{position:absolute;top:24px;height:20px;width:24px;margin-left:-12px;cursor:ew-resize;z-index:4;touch-action:none;display:flex;justify-content:center;align-items:center}
+.barh span{font:700 10px/12px var(--sans);background:var(--accent);color:var(--accent-ink);border-radius:4px;padding:1px 4px;min-width:14px;text-align:center;pointer-events:none}
+.barh.virtual span{background:var(--surface);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.barh:hover span,.barh.drag span{transform:scale(1.15)}
+.tl-inner.tight .barh span{font-size:0;padding:0;min-width:3px;width:3px;height:12px}
+.bar-mode{font-size:12px;color:var(--muted)}
+.xf{display:none;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:var(--surface-2);gap:9px}
+.xf.on{display:grid}
+.xf-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.xf-row>b{min-width:96px;font-size:12px}
+.xf input[type=text],.xf input[type=number],.xf select{height:28px;border:1px solid var(--line);border-radius:7px;padding:0 6px;background:var(--surface);color:var(--ink);font-variant-numeric:tabular-nums}
+.xf input[type=text],.xf input[type=number]{width:76px}
+.xf .muted{font-size:12px;color:var(--muted)}
+.btn:disabled{opacity:.45;cursor:default}
+
+/* rehearsal video */
+.vid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;padding:12px;margin-bottom:14px}
+.vid.hidden{display:none}
+.vid-stage{position:relative;background:#000;border-radius:10px;overflow:hidden;display:grid;place-items:center;height:var(--vh,360px)}
+.vid-stage video{max-width:100%;max-height:100%;display:block}
+.vid-stage.mirror video{transform:scaleX(-1)}
+.vid-over{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.65);color:#fff;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;display:none}
+.vid-over.on{display:block}
+.vid-badge{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.6);color:#fff;padding:3px 9px;border-radius:8px;font-size:11px;font-weight:600}
+.vid-ctl{display:flex;flex-direction:column;gap:8px;min-width:0;font-size:12px}
+.vid-head{display:flex;align-items:baseline;gap:8px}
+.vid-head b{font:600 20px var(--serif)}
+.vid-head span{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.vrow{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.vrow .lbl{min-width:92px;color:var(--muted);font-weight:600}
+.vrow input[type=text],.vrow input[type=number]{width:74px;height:28px;border:1px solid var(--line);border-radius:7px;padding:0 6px;background:var(--surface);color:var(--ink);font-variant-numeric:tabular-nums}
+.vrow input[type=range]{accent-color:var(--accent)}
+.vrow select{height:28px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink)}
+.vfree{border:1px dashed var(--accent);border-radius:9px;padding:8px;background:var(--accent-soft)}
+.vfree[hidden]{display:none}
+.vhint{color:var(--muted);font-size:12px;line-height:1.4}
+body.practice .vid{grid-template-columns:1fr}
+body.practice .vid-ctl{display:none}
+body.practice .vid-stage{height:52vh}
+@media (max-width:900px){ .vid{grid-template-columns:1fr} }
+.playhead::before{content:"";position:absolute;top:0;left:-5px;border:6px solid transparent;border-top:8px solid var(--ink)}
+.block{position:absolute;top:146px;height:48px;border-radius:8px;border:1.5px solid var(--c);background:color-mix(in srgb,var(--c) 26%,var(--surface));padding:4px 8px;font-size:12px;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:grab;touch-action:none;z-index:2;user-select:none}
+.block small{display:block;font-weight:500;color:var(--muted);font-size:11px}
+.block::before,.block::after{content:"";position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize}
+.block::before{left:0}.block::after{right:0}
+.block.active{background:var(--c);color:#1b0f15;box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 35%,transparent)}
+.block.active small{color:#1b0f15;opacity:.7}
+.block.sel{outline:2px solid var(--ink);outline-offset:1px}
+.tl-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted);background:var(--lane);z-index:5;font-size:15px}
+.tl-empty.hidden{display:none}
+.tl-empty .big{font:600 24px var(--serif);color:var(--ink);margin-bottom:6px}
+.tl-hint{font-size:12px;color:var(--muted)}
+body.dragging .tl{outline:3px dashed var(--accent);outline-offset:3px}
+
+/* steps */
+.steps-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:22px 0 10px}
+.steps-head h2{font:600 26px var(--serif);margin:0;flex:1}
+.list{position:relative;display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;max-height:70vh;overflow:auto;padding:4px;margin:-4px}
+.empty{grid-column:1/-1;border:1.5px dashed var(--line);border-radius:14px;padding:28px;text-align:center;color:var(--muted)}
+.sc{padding:12px 14px 12px;position:relative;--c:var(--accent);border-left:5px solid var(--c);transition:box-shadow .15s,transform .15s}
+.sc.active{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 45%,transparent),var(--shadow);transform:translateY(-1px)}
+.sc.sel{outline:2px solid var(--ink);outline-offset:1px}
+.sc-head{display:flex;align-items:center;gap:8px}
+.sc-num{width:26px;height:26px;border-radius:50%;background:var(--c);color:#1b0f15;font-weight:700;font-size:12px;display:grid;place-items:center;border:0;cursor:pointer;flex:none}
+.sc-name{flex:1;min-width:0;border:0;border-bottom:1px solid transparent;background:transparent;font:600 20px var(--serif);padding:2px 0;outline:none}
+.sc-name:focus,.sc-name:hover{border-bottom-color:var(--line)}
+.sc-count{font-size:11px;color:var(--muted);white-space:nowrap;font-weight:600}
+.sc-notes{width:100%;margin-top:8px;min-height:54px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--surface-2);outline:none;font-size:13px}
+.sc-notes:focus{border-color:var(--muted)}
+.sc-times{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--muted)}
+.sc-times input{width:68px;height:28px;border:1px solid var(--line);border-radius:7px;padding:0 6px;background:var(--surface);font-variant-numeric:tabular-nums;color:var(--ink)}
+.sc-dur{margin-left:auto;font-variant-numeric:tabular-nums}
+.sc-actions{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.sc-actions .del{margin-left:auto;color:var(--muted)}
+.sc-prog{position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:0 0 12px 0;overflow:hidden}
+.sc-prog i{display:block;height:100%;width:0;background:var(--c)}
+
+/* dialog + toast */
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);max-width:620px;width:calc(100% - 32px);padding:22px 24px;box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(20,10,16,.45)}
+dialog h3{font:600 26px var(--serif);margin:0 0 8px}
+dialog h4{margin:16px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+dialog ol{padding-left:20px;margin:0}
+dialog li{margin:4px 0}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:13px}
+kbd{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:var(--surface-2);font:600 12px var(--sans)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-weight:500;opacity:0;pointer-events:none;transition:all .25s;z-index:50}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* practice mode */
+body.practice .steps-section,body.practice .tl-tools,body.practice .xf,body.practice .top .actions,body.practice .hide-practice{display:none}
+body.practice .now-name{font-size:clamp(48px,8vw,96px)}
+body.practice .now-notes{font-size:clamp(18px,2.2vw,26px);max-height:none}
+body.practice .next-name{font-size:clamp(26px,3vw,40px)}
+body.practice .dots span{height:clamp(40px,7vh,72px);font-size:20px}
+body.practice .now{min-height:42vh;display:flex;flex-direction:column;justify-content:center}
+
+@media (max-width:820px){
+  .hero{grid-template-columns:1fr}
+  .now-name{font-size:34px}
+  .title-input{font-size:28px}
+  .time{min-width:0}
+  .list{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <input class="title-input" id="title" aria-label="Routine title" spellcheck="false">
+      <div class="song"><span id="songName">No song loaded</span><span class="saved" id="saved">Saved ✓</span></div>
+    </div>
+    <div class="actions">
+      <label class="btn primary" for="audioInput">♪ Load song</label>
+      <input type="file" id="audioInput" accept="audio/*,.mp3,.m4a,.wav,.ogg,.flac,.aac" hidden>
+      <label class="btn" for="videoInput" title="Load a rehearsal video to play in sync with the song">🎬 Load video</label>
+      <input type="file" id="videoInput" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv" hidden>
+      <button class="btn" id="cloudBtn" title="Save online to open on your phone or other computers">☁ Save online</button>
+      <button class="btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
+      <button class="btn" id="exportBtn" title="Download routine as a file">Export</button>
+      <label class="btn" for="importInput" title="Load a routine file">Import</label>
+      <input type="file" id="importInput" accept=".json,application/json" hidden>
+      <button class="btn" id="practiceBtn" title="Big-text practice view (F)">Practice view</button>
+      <button class="icon-btn" id="helpBtn" title="Help & shortcuts (?)" aria-label="Help">?</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="card now" id="nowCard">
+      <div class="label"><span>Now</span><span id="nowIdx"></span><span id="nowCount" style="margin-left:auto"></span></div>
+      <div class="now-name idle" id="nowName">Load a song to begin</div>
+      <div class="now-notes" id="nowNotes"></div>
+      <div class="bar"><i id="nowBar"></i></div>
+    </div>
+    <div class="side">
+      <div class="card countbox">
+        <div class="label"><span>Count</span><span id="countLabel" style="margin-left:auto;text-transform:none;letter-spacing:0"></span></div>
+        <div class="dots" id="dots"></div>
+        <div class="count-hint" id="countHint"></div>
+      </div>
+      <div class="card next" id="nextCard">
+        <div class="label"><span>Up next</span><span class="in" id="nextIn"></span></div>
+        <div class="next-name" id="nextName">—</div>
+        <div class="next-notes" id="nextNotes"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card vid hidden" id="vidCard">
+    <div class="vid-stage" id="vidStage">
+      <video id="video" playsinline muted preload="auto"></video>
+      <div class="vid-badge" id="vidBadge"></div>
+      <div class="vid-over" id="vidOver"></div>
+    </div>
+    <div class="vid-ctl">
+      <div class="vid-head"><b>Rehearsal video</b><span id="vidName"></span></div>
+      <div class="vrow"><span class="lbl">Starts at song</span>
+        <input type="text" id="vStart" aria-label="Song time where the video starts" title="Song time where the video's first frame lines up. Can be negative to skip the start of the video.">
+        <button class="btn sm" data-vs="-0.1">−0.1</button><button class="btn sm" data-vs="-0.02">−.02</button>
+        <button class="btn sm" data-vs="0.02">+.02</button><button class="btn sm" data-vs="0.1">+0.1</button>
+      </div>
+      <div class="vrow"><span class="lbl">Video speed</span>
+        <input type="number" id="vRate" step="0.1" min="25" max="400" aria-label="Video speed percent"><span>%</span>
+        <button class="btn sm" data-vr="0.995">−0.5%</button><button class="btn sm" data-vr="0.999">−0.1%</button>
+        <button class="btn sm" data-vr="1.001">+0.1%</button><button class="btn sm" data-vr="1.005">+0.5%</button>
+      </div>
+      <div class="vrow"><span class="lbl">Match tempo</span>
+        rehearsal <input type="number" id="vBpm" step="0.1" min="20" max="300" placeholder="BPM" aria-label="Rehearsal music BPM">
+        → song <b id="vSongBpm">—</b> <button class="btn sm" id="vMatch">Match</button>
+      </div>
+      <div class="vrow"><span class="lbl">Fine-tune</span>
+        <button class="btn sm on" id="vLink" title="Unlink to move the video on its own and pick sync points">🔗 Linked to song</button>
+        <button class="btn sm" id="vSync" disabled title="Link the current video frame to the current song time">📍 Sync point</button>
+        <span id="vPts" style="color:var(--muted)"></span>
+        <button class="btn sm ghost" id="vPtsClear" hidden>clear</button>
+      </div>
+      <div class="vfree" id="vFree" hidden>
+        <div class="vrow">
+          <button class="btn sm" id="vBack" title="Back one frame">◀ frame</button>
+          <button class="btn sm" id="vPlayFree" title="Play or pause the video only">▶ video</button>
+          <button class="btn sm" id="vFwd" title="Forward one frame">frame ▶</button>
+          <span id="vTime" style="margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600"></span>
+        </div>
+        <input type="range" id="vScrub" min="0" max="1" step="0.01" value="0" style="width:100%;margin-top:6px" aria-label="Scrub video">
+        <div class="vhint">Find a clear moment (a clap, a dip, a first step) in the video, pause the song on the same moment, then press <b>📍 Sync point</b>. Do it again near the end and the speed is worked out for you. Then relink.</div>
+      </div>
+      <div class="vrow"><span class="lbl">Video sound</span>
+        <input type="range" id="vVol" min="0" max="1" step="0.05" value="0" style="width:90px" aria-label="Video sound volume"><span id="vVolTxt">off</span>
+      </div>
+      <div class="vrow"><span class="lbl">View</span>
+        <label class="field"><input type="checkbox" id="vMirror"> Mirror</label>
+        <select id="vSize" aria-label="Video size"><option value="s">Small</option><option value="m">Medium</option><option value="l">Large</option></select>
+        <button class="btn sm ghost" id="vRemove" style="margin-left:auto">Remove video</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card transport">
+    <button class="play" id="playBtn" aria-label="Play / pause" title="Play / pause (Space)"></button>
+    <button class="icon-btn" id="backBtn" title="Back 2s (←)" aria-label="Back 2 seconds">⟲</button>
+    <button class="icon-btn" id="fwdBtn" title="Forward 2s (→)" aria-label="Forward 2 seconds">⟳</button>
+    <div class="time" id="timeDisp">0:00.0 <small>/ 0:00.0</small></div>
+    <div class="sep hide-practice"></div>
+    <label class="field">Speed
+      <select id="speed">
+        <option value="0.5">50%</option><option value="0.6">60%</option><option value="0.7">70%</option>
+        <option value="0.8">80%</option><option value="0.9">90%</option><option value="1" selected>100%</option>
+      </select>
+    </label>
+    <label class="field">Lead-in
+      <select id="leadIn"><option value="0">none</option><option value="1">1s</option><option value="2">2s</option><option value="4">4s</option><option value="8">8s</option></select>
+    </label>
+    <span class="loop-badge" id="loopBadge">⟳ <span id="loopText"></span><button id="loopClear" title="Stop looping (Esc)" aria-label="Stop looping">✕</button></span>
+    <div class="spacer"></div>
+    <button class="btn hide-practice" id="markBtn" title="Start a new step at the playhead (M)">＋ Step here <kbd>M</kbd></button>
+  </section>
+
+  <section class="card tl-card">
+    <div class="tl-tools">
+      <label class="field">BPM <input type="number" id="bpm" min="0" max="300" step="0.1" placeholder="—"></label>
+      <button class="btn sm" id="tapBtn" title="Tap on each beat while the song plays — start on a '1' (T)">Tap tempo <kbd>T</kbd></button>
+      <label class="field" title="Time of a beat '1' — nudge to line the grid up with the music">Beat 1 at <input type="number" id="offset" step="0.01" min="0"> s</label>
+      <label class="field"><input type="checkbox" id="snap" checked> Snap to beats</label>
+      <div class="sep"></div>
+      <span class="bar-mode" id="barMode"></span>
+      <button class="btn sm" id="barsResetBtn" title="Remove manually placed bars and go back to the even BPM grid">Reset bars</button>
+      <label class="field" title="When you drag a bar, steps inside it stretch and move with the beats"><input type="checkbox" id="followBars" checked> Steps follow bars</label>
+      <div class="spacer"></div>
+      <button class="btn sm" id="xfBtn" title="Move or stretch the whole routine against the song">⇔ Shift / stretch</button>
+      <label class="field"><input type="checkbox" id="follow" checked> Follow playhead</label>
+      <label class="field">Zoom <input type="range" id="zoom" min="0" max="100" value="30"></label>
+      <button class="btn sm" id="fitBtn">Fit</button>
+    </div>
+    <div class="xf" id="xf">
+      <div class="xf-row">
+        <b>Apply to</b>
+        <label class="field"><input type="checkbox" id="xfSteps" checked> Steps</label>
+        <label class="field"><input type="checkbox" id="xfBars" checked> Bars / beat grid</label>
+        <span class="muted" id="xfSpan" style="margin-left:auto"></span>
+      </div>
+      <div class="xf-row">
+        <b>Shift</b>
+        <button class="btn sm" data-shift="-1">−1s</button>
+        <button class="btn sm" data-shift="-0.1">−0.1s</button>
+        <button class="btn sm" data-shift="-0.02">−0.02s</button>
+        <button class="btn sm" data-shift="0.02">+0.02s</button>
+        <button class="btn sm" data-shift="0.1">+0.1s</button>
+        <button class="btn sm" data-shift="1">+1s</button>
+        <span class="muted">or by</span>
+        <input type="text" id="xfShiftVal" placeholder="e.g. -1.25" aria-label="Shift amount in seconds"><span class="muted">s</span>
+        <button class="btn sm" id="xfShiftApply">Apply</button>
+        <span class="muted">Keys: <kbd>,</kbd> <kbd>.</kbd> ±0.05s, <kbd>&lt;</kbd> <kbd>&gt;</kbd> ±0.5s. Moving everything later is the same as starting the song earlier.</span>
+      </div>
+      <div class="xf-row">
+        <b>Stretch</b>
+        <span class="muted">anchored at</span>
+        <select id="xfPivot" aria-label="Stretch anchor">
+          <option value="first">first step / bar</option>
+          <option value="zero">song start (0:00)</option>
+          <option value="playhead">playhead</option>
+        </select>
+        <button class="btn sm" data-scale="0.99">−1%</button>
+        <button class="btn sm" data-scale="0.999">−0.1%</button>
+        <button class="btn sm" data-scale="1.001">+0.1%</button>
+        <button class="btn sm" data-scale="1.01">+1%</button>
+        <span class="muted">or to</span>
+        <input type="number" id="xfScaleVal" step="0.1" min="10" max="1000" placeholder="100" aria-label="Stretch percent"><span class="muted">%</span>
+        <button class="btn sm" id="xfScaleApply">Apply</button>
+        <span class="muted">or make the last step end at</span>
+        <input type="text" id="xfFitVal" placeholder="m:ss.s" aria-label="Target end time">
+        <button class="btn sm" id="xfFitNow" title="Use the playhead time">now</button>
+        <button class="btn sm" id="xfFitApply">Fit</button>
+      </div>
+    </div>
+    <div class="tl" id="tl">
+      <canvas id="tlCanvas"></canvas>
+      <div class="tl-scroll" id="tlScroll"><div class="tl-inner" id="tlInner"><div class="playhead" id="playhead"></div></div></div>
+      <div class="tl-empty" id="tlEmpty">
+        <div><div class="big">Drop your song here</div>or <label class="btn sm" for="audioInput" style="margin-left:4px">choose a file</label><div class="tl-hint" style="margin-top:10px">MP3, M4A, WAV… it stays on this computer</div></div>
+      </div>
+    </div>
+    <div class="tl-hint" style="margin-top:8px"><b>Bars:</b> drag a numbered bar marker onto the “1” (Shift-drag moves every later bar too) · double-click the bar strip to add a bar, or a marker to delete it · press <kbd>B</kbd> on each “1” while playing to tap bars in live<br>
+    <b>Steps:</b> click to seek · double-click the bottom lane to add a step · drag a step to move it, drag its edges to resize (hold Alt to skip snapping) · Ctrl+scroll to zoom</div>
+  </section>
+
+  <section class="steps-section">
+    <div class="steps-head">
+      <h2>Steps <span id="stepCount" style="font-size:16px;color:var(--muted)"></span></h2>
+      <button class="btn" id="addBtn">＋ Add step at playhead</button>
+      <button class="btn ghost" id="clearBtn">Clear all</button>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+</div>
+
+<dialog id="help">
+  <h3>How to lay out your dance</h3>
+  <ol>
+    <li><b>Load your song</b> (button or drag & drop). It's saved in this browser so it'll be here next time.</li>
+    <li><b>Find the beat.</b> Type the BPM, or press play and tap <kbd>T</kbd> on every beat, starting on a “1”. Nudge “Beat 1 at” until the grid lines sit on the beats.</li>
+    <li><b>Fix drifting bars.</b> If the song speeds up or slows down, drag the numbered bar markers (just above the waveform) so each sits on its “1”. The 8 beats inside each bar are spread evenly between markers. Or press <kbd>B</kbd> on every “1” while the song plays to tap all the bars in from scratch. <b>Reset bars</b> goes back to the even BPM grid.</li>
+    <li><b>Mark the moves.</b> While the song plays, press <kbd>M</kbd> each time a new move starts. The previous step ends automatically.</li>
+    <li><b>Describe each step</b> in the cards below: a name (“Basic sway”, “Underarm turn”, “Dip!”) and notes on footwork, who leads, and where your hands go.</li>
+    <li><b>Add your rehearsal video</b> (🎬 Load video). It plays in sync with the song, without its own sound. Set where it starts and how fast it plays. If you know both tempos, <b>Match tempo</b> sets the speed. For an exact fit, unlink and set two <b>Sync points</b>.</li>
+    <li><b>Practice.</b> Slow the speed down, loop a tricky step, and use <b>Practice view</b> for big text you can read from across the room.</li>
+  </ol>
+  <h4>Keyboard</h4>
+  <div class="keys">
+    <span><kbd>Space</kbd></span><span>Play / pause</span>
+    <span><kbd>M</kbd></span><span>New step at playhead</span>
+    <span><kbd>T</kbd></span><span>Tap tempo</span>
+    <span><kbd>B</kbd></span><span>Place a bar (“1”) at the playhead; tap again near a bar to move it</span>
+    <span><kbd>←</kbd> <kbd>→</kbd></span><span>Seek 2s (Shift: 10s)</span>
+    <span><kbd>↑</kbd> <kbd>↓</kbd></span><span>Jump to previous / next step</span>
+    <span><kbd>Enter</kbd></span><span>Play selected step (with lead-in)</span>
+    <span><kbd>L</kbd></span><span>Loop the selected / current step</span>
+    <span><kbd>[</kbd> <kbd>]</kbd></span><span>Set selected step's start / end to the playhead</span>
+    <span><kbd>Delete</kbd></span><span>Delete selected step</span>
+    <span><kbd>,</kbd> <kbd>.</kbd></span><span>Shift the whole routine 0.05s earlier / later (<kbd>&lt;</kbd> <kbd>&gt;</kbd>: 0.5s)</span>
+    <span><kbd>Ctrl</kbd>+<kbd>Z</kbd></span><span>Undo</span>
+    <span><kbd>F</kbd></span><span>Toggle practice view</span>
+    <span><kbd>Esc</kbd></span><span>Stop looping / leave practice view</span>
+  </div>
+  <h4>Saving</h4>
+  <p style="margin:0">Everything autosaves in this browser. Use <b>Export</b> to keep a backup or send the routine to your partner. They can <b>Import</b> it and load the same song.</p>
+  <form method="dialog" style="text-align:right;margin-top:16px"><button class="btn primary">Got it</button></form>
+</dialog>
+
+<dialog id="cloudDlg">
+  <div id="cloudOff">
+    <h3>Save online</h3>
+    <p style="margin-top:0">Keep this routine, the song and the rehearsal video online, so you can open them on your phone or another computer.</p>
+    <ul style="padding-left:20px;margin:0 0 12px">
+      <li>You get a private link. Anyone who has the link can open and edit the routine, so only share it with your partner.</li>
+      <li>Changes save automatically and show up on your other devices within about 20 seconds.</li>
+      <li>The song and video upload in the background. A big video can take a few minutes.</li>
+    </ul>
+    <p id="cloudWhere" class="vhint" hidden></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" id="cloudCancel">Cancel</button>
+      <button class="btn primary" id="goOnline">Save online</button>
+    </div>
+  </div>
+  <div id="cloudOn" hidden>
+    <h3>Open on other devices</h3>
+    <p style="margin-top:0">Open this link on your phone or another computer. It's the key to your routine, so keep it private.</p>
+    <div style="display:flex;gap:6px">
+      <input id="editLink" readonly style="flex:1;min-width:0;height:34px;border:1px solid var(--line);border-radius:8px;padding:0 9px;background:var(--surface-2);color:var(--ink);font-size:12px" aria-label="Edit link">
+      <button class="btn primary" id="copyLink">Copy</button>
+    </div>
+    <div id="qr" style="display:flex;justify-content:center;margin:14px 0 6px"></div>
+    <div id="qrHint" class="vhint" style="text-align:center">Scan with your phone's camera</div>
+    <h4>Files</h4>
+    <div id="cloudFiles" class="vhint" style="font-size:13px"></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:16px">
+      <button class="btn ghost" id="unlink" title="This device stops syncing. The online copy and its link keep working.">Stop syncing on this device</button>
+      <span style="flex:1"></span>
+      <form method="dialog"><button class="btn primary">Done</button></form>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+const PALETTE = ['#e8869f','#86aee8','#e8bd6a','#8fd3a8','#b99ae8','#e89a74','#72cdd0','#dc96cb'];
+const RULER_H = 24, BAR_H = 20, WAVE_H = 96, LANE_H = 60;
+const WAVE_TOP = RULER_H + BAR_H, LANE_TOP = WAVE_TOP + WAVE_H, TLH = LANE_TOP + LANE_H;
+const STORE_KEY = 'firstDancePlanner.v1';
+const PEAK_RATE = 200; // waveform buckets per second
+const MIN_PPS = 6, MAX_PPS = 400;
+
+const $ = id => document.getElementById(id);
+const el = {
+  title:$('title'), songName:$('songName'), saved:$('saved'), audioInput:$('audioInput'), importInput:$('importInput'),
+  exportBtn:$('exportBtn'), practiceBtn:$('practiceBtn'), helpBtn:$('helpBtn'), help:$('help'),
+  nowCard:$('nowCard'), nowIdx:$('nowIdx'), nowCount:$('nowCount'), nowName:$('nowName'), nowNotes:$('nowNotes'), nowBar:$('nowBar'),
+  dots:$('dots'), countLabel:$('countLabel'), countHint:$('countHint'),
+  nextCard:$('nextCard'), nextIn:$('nextIn'), nextName:$('nextName'), nextNotes:$('nextNotes'),
+  playBtn:$('playBtn'), backBtn:$('backBtn'), fwdBtn:$('fwdBtn'), timeDisp:$('timeDisp'), speed:$('speed'), leadIn:$('leadIn'),
+  loopBadge:$('loopBadge'), loopText:$('loopText'), loopClear:$('loopClear'), markBtn:$('markBtn'),
+  undoBtn:$('undoBtn'), xfBtn:$('xfBtn'), xf:$('xf'), xfSteps:$('xfSteps'), xfBars:$('xfBars'), xfSpan:$('xfSpan'),
+  xfShiftVal:$('xfShiftVal'), xfShiftApply:$('xfShiftApply'), xfPivot:$('xfPivot'), xfScaleVal:$('xfScaleVal'),
+  xfScaleApply:$('xfScaleApply'), xfFitVal:$('xfFitVal'), xfFitNow:$('xfFitNow'), xfFitApply:$('xfFitApply'),
+  barMode:$('barMode'), barsResetBtn:$('barsResetBtn'), followBars:$('followBars'),
+  bpm:$('bpm'), tapBtn:$('tapBtn'), offset:$('offset'), snap:$('snap'), follow:$('follow'), zoom:$('zoom'), fitBtn:$('fitBtn'),
+  tl:$('tl'), canvas:$('tlCanvas'), scroll:$('tlScroll'), inner:$('tlInner'), playhead:$('playhead'), tlEmpty:$('tlEmpty'),
+  list:$('list'), addBtn:$('addBtn'), clearBtn:$('clearBtn'), stepCount:$('stepCount'), toast:$('toast')
+};
+const ctx = el.canvas.getContext('2d');
+const audio = new Audio();
+audio.preload = 'auto';
+audio.preservesPitch = true;
+const video = $('video');
+video.muted = true;
+const vel = {};
+['vidCard','vidStage','vidBadge','vidOver','vidName','vStart','vRate','vBpm','vSongBpm','vMatch','vLink','vSync','vPts','vPtsClear',
+ 'vFree','vBack','vPlayFree','vFwd','vTime','vScrub','vVol','vVolTxt','vMirror','vSize','vRemove','videoInput'].forEach(id => vel[id] = $(id));
+let videoUrl = null, videoOK = false, vFree = false, vPoints = [];
+
+/* ---------- state ---------- */
+let routine = loadRoutine();
+let duration = 0, peaks = null, pps = 40, selectedId = null, loop = null;
+let audioName = '', audioUrl = null, dirty = true, lastActiveKey = '', drag = null;
+let taps = [], tapFirst = 0, tapMode = null;
+let colors = {};
+
+const uid = () => Math.random().toString(36).slice(2, 10);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const mod = (a, n) => ((a % n) + n) % n;
+function blankVideo(){ return {name:'', start:0, rate:1, volume:0, mirror:false, size:'m', bpm:0}; }
+function blankRoutine(){ return {version:1, title:'Our First Dance', bpm:0, offset:0, leadIn:2, bars:[], steps:[], video:blankVideo()}; }
+function normalize(r){
+  const out = Object.assign(blankRoutine(), r || {});
+  out.title = String(out.title || 'Our First Dance');
+  out.bpm = +out.bpm > 0 ? +out.bpm : 0;
+  out.offset = +out.offset > 0 ? +out.offset : 0;
+  out.leadIn = +out.leadIn >= 0 ? +out.leadIn : 2;
+  const v = Object.assign(blankVideo(), (r && r.video) || {});
+  out.video = { name:String(v.name || ''), start:isFinite(+v.start) ? +v.start : 0,
+    rate:+v.rate >= 0.1 && +v.rate <= 10 ? +v.rate : 1, volume:Math.min(1, Math.max(0, +v.volume || 0)),
+    mirror:!!v.mirror, size:['s','m','l'].includes(v.size) ? v.size : 'm', bpm:+v.bpm > 0 ? +v.bpm : 0 };
+  const m = (r && r.media) || {}, okMedia = x => x && typeof x.id === 'string' && /^[\w-]{16}$/.test(x.id)
+    ? { id:x.id, name:String(x.name || ''), type:String(x.type || ''), size:+x.size || 0 } : null;
+  out.media = { song:okMedia(m.song), video:okMedia(m.video) };
+  out.bars = (Array.isArray(r && r.bars) ? r.bars : []).map(Number).filter(v => isFinite(v) && v >= 0).sort((a, b) => a - b);
+  out.steps = (Array.isArray(r && r.steps) ? r.steps : [])
+    .filter(s => s && isFinite(+s.start) && isFinite(+s.end))
+    .map((s, i) => ({ id: String(s.id || uid()), name: String(s.name ?? ''), notes: String(s.notes ?? ''),
+      start: Math.max(0, +s.start), end: Math.max(+s.end, Math.max(0, +s.start) + 0.1),
+      color: /^#[0-9a-f]{6}$/i.test(s.color) ? s.color : PALETTE[i % PALETTE.length] }));
+  out.steps.sort((a, b) => a.start - b.start || a.end - b.end);
+  return out;
+}
+function loadRoutine(){
+  try { const raw = localStorage.getItem(STORE_KEY); if (raw) return normalize(JSON.parse(raw)); } catch (e) {}
+  return blankRoutine();
+}
+let saveTimer, savedTimer;
+// online sync state (the sync code itself is further down, under "online sync")
+let cloud = null, cloudSuppress = false;
+let songBlob = null, songMediaId = null, videoBlob = null, videoMediaId = null;
+function save(){
+  if (cloud && !cloudSuppress) cloudDirty();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(routine));
+      el.saved.classList.add('on'); clearTimeout(savedTimer);
+      savedTimer = setTimeout(() => el.saved.classList.remove('on'), 1200);
+    } catch (e) {}
+  }, 250);
+}
+const sortSteps = () => routine.steps.sort((a, b) => a.start - b.start || a.end - b.end);
+const byId = id => routine.steps.find(s => s.id === id);
+
+/* ---------- IndexedDB (stores the song between visits) ---------- */
+function idb(){
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('firstDancePlanner', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+async function idbSet(k, v){
+  const db = await idb();
+  return new Promise((res, rej) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+}
+async function idbGet(k){
+  const db = await idb();
+  return new Promise((res, rej) => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+}
+
+/* ---------- helpers ---------- */
+function fmt(t){
+  if (!isFinite(t) || t < 0) t = 0;
+  t = Math.round(t * 10) / 10;
+  const m = Math.floor(t / 60), s = t - m * 60;
+  return m + ':' + s.toFixed(1).padStart(4, '0');
+}
+function fmtShort(t){ const m = Math.floor(t / 60), s = Math.round(t - m * 60); return m + ':' + String(s).padStart(2, '0'); }
+function parseTime(str){
+  str = String(str).trim(); if (!str) return null;
+  let v;
+  if (str.includes(':')) { const [m, s] = str.split(':'); v = (+m) * 60 + parseFloat(s || 0); }
+  else v = parseFloat(str);
+  return isFinite(v) && v >= 0 ? v : null;
+}
+/* ---------- beat grid ----------
+   Manual mode: routine.bars holds the time of every "1"; the 8 beats of a bar
+   are spaced evenly up to the next bar. Before the first / after the last bar
+   the neighbouring bar's length is extrapolated.
+   BPM mode (no manual bars): an even grid from BPM + "beat 1" offset. */
+const manualBars = () => routine.bars.length > 0;
+const hasGrid = () => manualBars() || routine.bpm > 0;
+const fallbackBar = () => routine.bpm > 0 ? 480 / routine.bpm : 4;
+function edgeLens(){
+  const B = routine.bars, n = B.length;
+  return n > 1 ? [B[1] - B[0], B[n - 1] - B[n - 2]] : [fallbackBar(), fallbackBar()];
+}
+function beatAt(t){
+  const B = routine.bars, n = B.length;
+  if (!n) return routine.bpm > 0 ? (t - routine.offset) * routine.bpm / 60 : null;
+  const [L0, Ln] = edgeLens();
+  if (t < B[0]) return (t - B[0]) / L0 * 8;
+  if (t >= B[n - 1]) return 8 * (n - 1) + (t - B[n - 1]) / Ln * 8;
+  let lo = 0, hi = n - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (B[m] <= t) lo = m; else hi = m; }
+  return 8 * lo + 8 * (t - B[lo]) / (B[lo + 1] - B[lo]);
+}
+function timeOfBeat(b){
+  const B = routine.bars, n = B.length;
+  if (!n) return routine.offset + b * 60 / routine.bpm;
+  const [L0, Ln] = edgeLens();
+  if (b < 0) return B[0] + b / 8 * L0;
+  const i = Math.floor(b / 8);
+  if (i >= n - 1) return B[n - 1] + (b - 8 * (n - 1)) / 8 * Ln;
+  return B[i] + (b - 8 * i) / 8 * (B[i + 1] - B[i]);
+}
+function barTimes(){
+  if (manualBars()) return routine.bars;
+  if (!(routine.bpm > 0) || !duration) return [];
+  const bar = 480 / routine.bpm, out = [];
+  for (let k = 0, t = routine.offset; t <= duration + 1e-6 && k < 5000; k++, t = routine.offset + k * bar) out.push(t);
+  return out;
+}
+function snapT(t, on = true){
+  if (!on || !hasGrid() || !el.snap.checked) return t;
+  return timeOfBeat(Math.round(beatAt(t)));
+}
+function countLabel(t){
+  if (!hasGrid()) return '';
+  const b = Math.round(beatAt(t) + 1e-6); if (b < 0) return '';
+  return `8-ct ${Math.floor(b / 8) + 1} · ${b % 8 + 1}`;
+}
+function durLabel(s){
+  const d = s.end - s.start;
+  return d.toFixed(1) + 's' + (hasGrid() ? ` · ${Math.round((beatAt(s.end) - beatAt(s.start)) * 2) / 2} beats` : '');
+}
+const maxT = () => duration || Math.max(60, ...routine.steps.map(s => s.end));
+const defLen = t => hasGrid() ? Math.max(0.1, timeOfBeat(beatAt(t) + 8) - t) : 4;
+function setText(node, v){ if (node._v !== v) { node._v = v; node.textContent = v; } }
+let toastTimer;
+function toast(msg){ el.toast.textContent = msg; el.toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.toast.classList.remove('on'), 2200); }
+function readColors(){
+  const cs = getComputedStyle(document.documentElement), g = n => cs.getPropertyValue(n).trim();
+  colors = { ink:g('--ink'), muted:g('--muted'), line:g('--line'), surface2:g('--surface-2'), lane:g('--lane'), wave:g('--wave'), played:g('--wave-played'), accent:g('--accent') };
+  dirty = true;
+}
+
+/* ---------- audio loading ---------- */
+async function loadAudio(blob, name, persist, mediaId = null){
+  if (audioUrl) URL.revokeObjectURL(audioUrl);
+  audioUrl = URL.createObjectURL(blob);
+  audioName = name || 'Untitled song';
+  peaks = null; loop = null; renderLoop();
+  el.songName.textContent = '♪ ' + audioName + ' · analyzing…';
+  audio.src = audioUrl;
+  audio.playbackRate = audio.defaultPlaybackRate = +el.speed.value;
+  const ok = await new Promise(res => {
+    audio.addEventListener('loadedmetadata', () => res(true), {once:true});
+    audio.addEventListener('error', () => res(false), {once:true});
+  });
+  if (!ok) { toast("Sorry, this browser can't play that file"); el.songName.textContent = 'No song loaded'; return; }
+  songBlob = blob; songMediaId = mediaId;
+  if (persist && cloud) queueUpload('song');
+  duration = audio.duration;
+  el.tlEmpty.classList.add('hidden');
+  fit();
+  renderAll();
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const ac = new AC();
+    const buf = await ac.decodeAudioData(await blob.arrayBuffer());
+    computePeaks(buf);
+    ac.close && ac.close();
+  } catch (e) { toast('Waveform unavailable, but playback works'); }
+  el.songName.textContent = '♪ ' + audioName + ' · ' + fmtShort(duration);
+  dirty = true;
+  if (persist) { try { await idbSet('audio', {blob, name:audioName, mediaId:null}); } catch (e) { toast("Couldn't store the song for next time"); } }
+}
+function computePeaks(buf){
+  const n = Math.ceil(buf.duration * PEAK_RATE), spb = buf.sampleRate / PEAK_RATE;
+  const out = new Float32Array(n);
+  for (let c = 0; c < buf.numberOfChannels; c++) {
+    const d = buf.getChannelData(c), len = d.length;
+    for (let i = 0; i < n; i++) {
+      let m = out[i];
+      const a = Math.floor(i * spb), b = Math.min(len, Math.floor((i + 1) * spb));
+      for (let j = a; j < b; j++) { const v = d[j] < 0 ? -d[j] : d[j]; if (v > m) m = v; }
+      out[i] = m;
+    }
+  }
+  let mx = 0; for (let i = 0; i < n; i++) if (out[i] > mx) mx = out[i];
+  if (mx > 0) for (let i = 0; i < n; i++) out[i] /= mx;
+  peaks = out;
+}
+
+/* ---------- transport ---------- */
+const playIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>';
+const pauseIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>';
+function syncPlayBtn(){ el.playBtn.innerHTML = audio.paused ? playIcon : pauseIcon; }
+function togglePlay(){
+  if (!audio.src) { el.audioInput.click(); return; }
+  if (audio.paused) audio.play().catch(() => {}); else audio.pause();
+}
+function seek(t){
+  if (!audio.src) return;
+  audio.currentTime = clamp(t, 0, duration || 0);
+  dirty = true;
+}
+function leadIn(){ return +el.leadIn.value || 0; }
+function playFrom(s){ if (!audio.src) return; seek(Math.max(0, s.start - leadIn())); audio.play().catch(() => {}); }
+function toggleLoop(s){
+  if (!s) return;
+  if (loop && loop.id === s.id) { loop = null; renderLoop(); return; }
+  loop = { id:s.id, start:Math.max(0, s.start - leadIn()), end:s.end };
+  renderLoop(); select(s.id);
+  seek(loop.start); audio.play().catch(() => {});
+}
+function refreshLoop(){
+  if (!loop) return;
+  const s = byId(loop.id);
+  if (!s) loop = null; else { loop.start = Math.max(0, s.start - leadIn()); loop.end = s.end; }
+  renderLoop();
+}
+function renderLoop(){
+  el.loopBadge.classList.toggle('on', !!loop);
+  if (loop) { const s = byId(loop.id); el.loopText.textContent = 'Looping ' + (s && s.name ? s.name : 'step'); }
+  el.list.querySelectorAll('.sc').forEach(c => { const b = c.querySelector('[data-act=loop]'); b && b.classList.toggle('on', !!loop && loop.id === c.dataset.id); });
+  dirty = true;
+}
+audio.addEventListener('play', syncPlayBtn);
+audio.addEventListener('pause', syncPlayBtn);
+audio.addEventListener('ended', () => { if (loop) { seek(loop.start); audio.play().catch(() => {}); } });
+audio.addEventListener('seeked', () => dirty = true);
+
+/* ---------- steps ---------- */
+function activeStep(t){
+  let a = null;
+  for (const s of routine.steps) { if (s.start > t) break; if (t < s.end) a = s; }
+  return a;
+}
+function addStepAt(t, {focus = false} = {}){
+  snapshot();
+  t = clamp(snapT(t), 0, Math.max(0, maxT() - 0.1));
+  const cur = activeStep(t);
+  if (cur && cur.start < t - 0.05) cur.end = t;            // end the step we're in
+  const nxt = routine.steps.find(s => s.start > t + 0.05);
+  let end = t + defLen(t);
+  if (nxt) end = Math.min(end, nxt.start);
+  end = Math.min(end, maxT());
+  if (end - t < 0.1) end = t + 0.1;
+  const used = new Set(routine.steps.map(s => s.color));
+  const color = PALETTE.find(c => !used.has(c)) || PALETTE[routine.steps.length % PALETTE.length];
+  const s = { id:uid(), name:'', notes:'', start:t, end, color };
+  routine.steps.push(s); sortSteps();
+  selectedId = s.id;
+  save(); renderAll(); refreshLoop();
+  const card = el.list.querySelector(`.sc[data-id="${s.id}"]`);
+  if (card) { scrollCard(card); if (focus) card.querySelector('.sc-name').focus(); }
+  return s;
+}
+function deleteStep(id){
+  snapshot();
+  routine.steps = routine.steps.filter(s => s.id !== id);
+  if (selectedId === id) selectedId = null;
+  save(); renderAll(); refreshLoop();
+}
+function select(id){
+  selectedId = id;
+  el.inner.querySelectorAll('.block').forEach(b => b.classList.toggle('sel', b.dataset.id === id));
+  el.list.querySelectorAll('.sc').forEach(c => c.classList.toggle('sel', c.dataset.id === id));
+  const card = el.list.querySelector(`.sc[data-id="${id}"]`);
+  if (card) scrollCard(card);
+}
+function scrollCard(card){
+  const lr = el.list.getBoundingClientRect(), cr = card.getBoundingClientRect();
+  if (cr.top < lr.top || cr.bottom > lr.bottom) el.list.scrollTo({top: card.offsetTop - 8, behavior:'smooth'});
+}
+
+/* ---------- rendering ---------- */
+function innerWidth(){ return Math.ceil(maxT() * pps) + 40; }
+function layoutTimeline(){
+  el.inner.style.width = innerWidth() + 'px';
+  el.inner.querySelectorAll('.block').forEach(b => { const s = byId(b.dataset.id); if (s) positionBlock(s, b); });
+  positionBars();
+  dirty = true;
+}
+function positionBlock(s, b){
+  b.style.left = (s.start * pps) + 'px';
+  b.style.width = Math.max(6, (s.end - s.start) * pps) + 'px';
+}
+function blockLabel(s, b){
+  const i = routine.steps.indexOf(s) + 1;
+  b.firstChild.textContent = `${i}. ${s.name || 'Untitled'}`;
+  b.lastChild.textContent = countLabel(s.start) || fmt(s.start);
+  b.title = `${s.name || 'Untitled'} (${fmt(s.start)}–${fmt(s.end)})`;
+}
+function renderBlocks(){
+  el.inner.querySelectorAll('.block').forEach(b => b.remove());
+  for (const s of routine.steps) {
+    const b = document.createElement('div');
+    b.className = 'block' + (s.id === selectedId ? ' sel' : '');
+    b.dataset.id = s.id; b.style.setProperty('--c', s.color);
+    b.append(document.createElement('span'), document.createElement('small'));
+    positionBlock(s, b); blockLabel(s, b);
+    el.inner.appendChild(b);
+  }
+  el.inner.style.width = innerWidth() + 'px';
+}
+const CARD_HTML = `
+  <div class="sc-head"><button class="sc-num" data-act="color" title="Change colour"></button>
+    <input class="sc-name" placeholder="Name this move…" aria-label="Step name"><span class="sc-count"></span></div>
+  <textarea class="sc-notes" placeholder="Notes: footwork, who leads, hands, where to face…" aria-label="Notes"></textarea>
+  <div class="sc-times">
+    Start <input class="sc-start" aria-label="Start time"><button class="btn sm ghost" data-act="setStart" title="Set start to playhead ([)">⇤ now</button>
+    End <input class="sc-end" aria-label="End time"><button class="btn sm ghost" data-act="setEnd" title="Set end to playhead (])">now ⇥</button>
+    <span class="sc-dur"></span>
+  </div>
+  <div class="sc-actions">
+    <button class="btn sm" data-act="play">▶ Play</button>
+    <button class="btn sm" data-act="loop">⟳ Loop</button>
+    <button class="btn sm ghost del" data-act="del">Delete</button>
+  </div>
+  <div class="sc-prog"><i></i></div>`;
+function renderCards(){
+  el.list.innerHTML = '';
+  el.stepCount.textContent = routine.steps.length ? `(${routine.steps.length})` : '';
+  if (!routine.steps.length) {
+    const e = document.createElement('div'); e.className = 'empty';
+    e.innerHTML = audio.src
+      ? 'No steps yet. Press play and hit <kbd>M</kbd> each time a new move starts, or double-click the timeline.'
+      : 'Load your song first, then mark steps as it plays.';
+    el.list.appendChild(e); return;
+  }
+  routine.steps.forEach((s, i) => {
+    const c = document.createElement('div');
+    c.className = 'card sc' + (s.id === selectedId ? ' sel' : '');
+    c.dataset.id = s.id; c.style.setProperty('--c', s.color);
+    c.innerHTML = CARD_HTML;
+    c.querySelector('.sc-num').textContent = i + 1;
+    c.querySelector('.sc-name').value = s.name;
+    c.querySelector('.sc-notes').value = s.notes;
+    if (loop && loop.id === s.id) c.querySelector('[data-act=loop]').classList.add('on');
+    updateCardTimes(s, c);
+    el.list.appendChild(c);
+  });
+}
+function updateCardTimes(s, c){
+  c = c || el.list.querySelector(`.sc[data-id="${s.id}"]`); if (!c) return;
+  const st = c.querySelector('.sc-start'), en = c.querySelector('.sc-end');
+  if (document.activeElement !== st) st.value = fmt(s.start);
+  if (document.activeElement !== en) en.value = fmt(s.end);
+  c.querySelector('.sc-dur').textContent = durLabel(s);
+  c.querySelector('.sc-count').textContent = countLabel(s.start);
+}
+function renderBars(){
+  el.inner.querySelectorAll('.barh').forEach(b => b.remove());
+  const bt = barTimes(), virt = !manualBars();
+  bt.forEach((t, i) => {
+    const h = document.createElement('div');
+    h.className = 'barh' + (virt ? ' virtual' : '');
+    h.dataset.i = i;
+    h.title = `8-count ${i + 1} at ${fmt(t)}. Drag onto the “1” (Shift-drag moves all later bars); double-click to delete.`;
+    const sp = document.createElement('span'); sp.textContent = i + 1; h.appendChild(sp);
+    el.inner.appendChild(h);
+  });
+  positionBars();
+  // toolbar state
+  el.barMode.textContent = manualBars() ? `${routine.bars.length} bars placed by hand`
+    : routine.bpm > 0 ? 'Bars from BPM (drag one to adjust)' : 'No bars yet: set BPM or press B on each “1”';
+  el.barsResetBtn.disabled = !manualBars();
+  el.offset.disabled = manualBars();
+  el.offset.title = manualBars() ? 'Using your hand-placed bars. Reset bars to use BPM + offset again.' : '';
+}
+function positionBars(){
+  const bt = barTimes(), hs = el.inner.querySelectorAll('.barh');
+  hs.forEach(h => { const t = bt[+h.dataset.i]; if (t != null) h.style.left = (t * pps) + 'px'; });
+  const avg = bt.length > 1 ? (bt[bt.length - 1] - bt[0]) / (bt.length - 1) * pps : 999;
+  el.inner.classList.toggle('tight', avg < 26);
+}
+function materializeBars(){ if (!manualBars()) routine.bars = barTimes().slice(); }
+function addBar(t, {tapped = false} = {}){
+  snapshot();
+  if (!manualBars()) { if (tapped) routine.bars = []; else materializeBars(); }
+  const B = routine.bars, near = tapped ? 0.45 : 0.15;
+  const j = B.findIndex(b => Math.abs(b - t) < near);
+  if (j >= 0) B[j] = t; else { B.push(t); B.sort((a, b) => a - b); }
+  save(); renderAll();
+  if (tapped) toast(`Bar ${B.indexOf(t) + 1} placed`);
+}
+function deleteBar(i){
+  snapshot();
+  materializeBars();
+  routine.bars.splice(i, 1);
+  save(); renderAll();
+}
+function renderAll(){ renderBlocks(); renderBars(); renderCards(); updateXfSpan(); lastActiveKey = '#'; dirty = true; }
+
+/* ---------- count dots ---------- */
+for (let i = 1; i <= 8; i++) { const d = document.createElement('span'); d.textContent = i; el.dots.appendChild(d); }
+const dotEls = [...el.dots.children];
+
+/* ---------- live update ---------- */
+function updateLive(t){
+  const steps = routine.steps;
+  setText(el.timeDisp.firstChild, fmt(t) + ' ');
+  setText(el.timeDisp.lastChild, '/ ' + fmt(duration));
+  el.playhead.style.left = (t * pps) + 'px';
+
+  const act = activeStep(t);
+  const next = steps.find(s => s.start > t + 0.0005 && s !== act);
+  const key = (act ? act.id : '-') + '|' + (next ? next.id : '-');
+  if (key !== lastActiveKey) {
+    lastActiveKey = key;
+    el.inner.querySelectorAll('.block').forEach(b => b.classList.toggle('active', !!act && b.dataset.id === act.id));
+    el.list.querySelectorAll('.sc').forEach(c => c.classList.toggle('active', !!act && c.dataset.id === act.id));
+    if (act && !audio.paused && el.follow.checked) {
+      const card = el.list.querySelector(`.sc[data-id="${act.id}"]`);
+      if (card && !el.list.contains(document.activeElement)) scrollCard(card);
+    }
+    el.list.querySelectorAll('.sc-prog i').forEach(i => i.style.width = '0');
+  }
+  // Now panel
+  if (act) {
+    el.nowCard.style.setProperty('--c', act.color);
+    el.nowName.classList.remove('idle');
+    setText(el.nowName, act.name || 'Untitled step');
+    setText(el.nowNotes, act.notes);
+    setText(el.nowIdx, `Step ${steps.indexOf(act) + 1} of ${steps.length}`);
+    const p = clamp((t - act.start) / (act.end - act.start), 0, 1);
+    el.nowBar.style.width = (p * 100) + '%';
+    const pi = el.list.querySelector(`.sc[data-id="${act.id}"] .sc-prog i`); if (pi) pi.style.width = (p * 100) + '%';
+  } else {
+    el.nowCard.style.setProperty('--c', 'var(--line)');
+    el.nowName.classList.add('idle');
+    setText(el.nowName, !audio.src ? 'Load a song to begin' : !steps.length ? 'Mark your first step with M' : next ? (t < steps[0].start ? 'Get ready…' : 'Hold / free move') : 'The end ♥');
+    setText(el.nowNotes, ''); setText(el.nowIdx, '');
+    el.nowBar.style.width = '0';
+  }
+  // Next panel
+  if (next) {
+    const dt = next.start - t, g = hasGrid();
+    el.nextCard.style.setProperty('--c', next.color);
+    setText(el.nextName, next.name || 'Untitled step');
+    setText(el.nextNotes, next.notes);
+    const db = g ? beatAt(next.start) - beatAt(t) : 0;
+    const beats = Math.ceil(db - 1e-3);
+    setText(el.nextIn, 'in ' + dt.toFixed(1) + 's' + (g ? ` · ${beats} beat${beats === 1 ? '' : 's'}` : ''));
+    el.nextCard.classList.toggle('soon', (g ? db <= 4 : dt <= 2.5) && !audio.paused);
+  } else {
+    setText(el.nextName, '—'); setText(el.nextNotes, ''); setText(el.nextIn, '');
+    el.nextCard.classList.remove('soon');
+  }
+  // Count
+  const bNow = hasGrid() ? beatAt(t) : null;
+  if (bNow != null && bNow >= -0.05) {
+    const bi = Math.floor(bNow + 0.05);
+    const n = mod(bi, 8);
+    dotEls.forEach((d, i) => { d.classList.toggle('on', i === n); d.classList.toggle('past', i < n); });
+    setText(el.countLabel, `8-count ${Math.floor(bi / 8) + 1}`);
+    setText(el.nowCount, `8-ct ${Math.floor(bi / 8) + 1} · ${n + 1}`);
+    if (act) {
+      const b0 = beatAt(act.start), half = v => Math.round(v * 2) / 2 + 0;
+      setText(el.countHint, `${half(bNow - b0)} of ${half(beatAt(act.end) - b0)} beats in this step`);
+    } else setText(el.countHint, '');
+  } else {
+    dotEls.forEach(d => d.classList.remove('on', 'past'));
+    setText(el.countLabel, ''); setText(el.nowCount, '');
+    setText(el.countHint, hasGrid() ? 'Counting starts at bar 1' : 'Set the BPM, tap the tempo, or place bars to see “5, 6, 7, 8” counts');
+  }
+}
+
+/* ---------- canvas timeline ---------- */
+function draw(){
+  const w = el.tl.clientWidth, dpr = window.devicePixelRatio || 1;
+  if (el.canvas.width !== Math.round(w * dpr) || el.canvas.height !== Math.round(TLH * dpr)) {
+    el.canvas.width = Math.round(w * dpr); el.canvas.height = Math.round(TLH * dpr);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, TLH);
+  if (!duration) return;
+  const sl = el.scroll.scrollLeft, t = audio.currentTime || 0, endX = duration * pps - sl;
+  const act = activeStep(t);
+
+  ctx.fillStyle = colors.surface2; ctx.fillRect(0, 0, w, RULER_H);
+  ctx.globalAlpha = 0.5; ctx.fillRect(0, RULER_H, w, BAR_H); ctx.globalAlpha = 1;
+
+  // step tints over the waveform
+  for (const s of routine.steps) {
+    const x0 = s.start * pps - sl, x1 = s.end * pps - sl;
+    if (x1 < 0 || x0 > w) continue;
+    ctx.globalAlpha = s === act ? 0.28 : 0.1;
+    ctx.fillStyle = s.color; ctx.fillRect(x0, WAVE_TOP, x1 - x0, WAVE_H);
+  }
+  // loop region
+  if (loop) {
+    const x0 = loop.start * pps - sl, x1 = loop.end * pps - sl;
+    ctx.globalAlpha = 0.14; ctx.fillStyle = colors.accent; ctx.fillRect(x0, 0, x1 - x0, TLH);
+    ctx.globalAlpha = 0.9; ctx.fillRect(x0, 0, 2, TLH); ctx.fillRect(x1 - 2, 0, 2, TLH);
+  }
+  ctx.globalAlpha = 1;
+
+  // beat grid
+  if (hasGrid()) {
+    const tEnd = Math.min(duration, (sl + w) / pps);
+    const k0 = Math.max(0, Math.ceil(beatAt(sl / pps) - 1e-6)), k1 = beatAt(tEnd);
+    for (let k = k0; k <= k1 && k - k0 < 20000; k++) {
+      const tb = timeOfBeat(k), bar = mod(k, 8) === 0;
+      const beatPx = (timeOfBeat(k + 1) - tb) * pps;
+      if (!bar && beatPx < 4) continue;
+      const x = Math.round(tb * pps - sl) + 0.5;
+      ctx.globalAlpha = bar ? 0.6 : (beatPx >= 12 ? 0.2 : 0.09);
+      ctx.strokeStyle = bar ? colors.accent : colors.muted;
+      ctx.beginPath(); ctx.moveTo(x, bar ? RULER_H : WAVE_TOP); ctx.lineTo(x, TLH); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ruler
+  const ivs = [0.5, 1, 2, 5, 10, 15, 30, 60];
+  const iv = ivs.find(v => v * pps >= 64) || 60;
+  ctx.fillStyle = colors.muted; ctx.strokeStyle = colors.line;
+  ctx.font = '500 11px Inter, system-ui, sans-serif'; ctx.textBaseline = 'middle';
+  for (let tt = Math.floor(sl / pps / iv) * iv; tt <= duration; tt += iv) {
+    const x = Math.round(tt * pps - sl) + 0.5; if (x > w) break;
+    ctx.beginPath(); ctx.moveTo(x, RULER_H - 7); ctx.lineTo(x, RULER_H); ctx.stroke();
+    ctx.fillText(iv < 1 ? fmt(tt) : fmtShort(tt), x + 4, RULER_H / 2);
+  }
+
+  // waveform
+  const mid = WAVE_TOP + WAVE_H / 2, amp = WAVE_H / 2 - 8;
+  const splitX = t * pps - sl;
+  const xmax = Math.min(w, endX);
+  if (peaks) {
+    for (let pass = 0; pass < 2; pass++) {
+      ctx.fillStyle = pass === 0 ? colors.played : colors.wave;
+      const xa = pass === 0 ? 0 : Math.max(0, Math.floor(splitX));
+      const xb = pass === 0 ? Math.min(xmax, Math.floor(splitX)) : xmax;
+      for (let x = xa; x < xb; x++) {
+        const i0 = Math.floor((sl + x) / pps * PEAK_RATE);
+        const i1 = Math.min(peaks.length, Math.max(i0 + 1, Math.floor((sl + x + 1) / pps * PEAK_RATE)));
+        let m = 0; for (let i = i0; i < i1; i++) if (peaks[i] > m) m = peaks[i];
+        const h = Math.max(0.5, m * amp);
+        ctx.fillRect(x, mid - h, 1, h * 2);
+      }
+    }
+  } else {
+    ctx.fillStyle = colors.wave; ctx.fillRect(0, mid - 0.5, xmax, 1);
+  }
+  // span covered by the rehearsal video (thin strip along the top)
+  if (videoOK && video.duration) {
+    const V = routine.video, x0 = V.start * pps - sl, x1 = (V.start + video.duration / V.rate) * pps - sl;
+    if (x1 > 0 && x0 < w) { ctx.globalAlpha = 0.7; ctx.fillStyle = colors.muted; ctx.fillRect(Math.max(0, x0), 0, Math.min(w, x1) - Math.max(0, x0), 3); ctx.globalAlpha = 1; }
+  }
+  // past end of song
+  if (endX < w) { ctx.globalAlpha = 0.5; ctx.fillStyle = colors.surface2; ctx.fillRect(Math.max(0, endX), 0, w, TLH); ctx.globalAlpha = 1; }
+  // lane separator
+  ctx.fillStyle = colors.line; ctx.fillRect(0, LANE_TOP, w, 1); ctx.fillRect(0, RULER_H - 1, w, 1); ctx.fillRect(0, WAVE_TOP - 1, w, 1);
+}
+
+function followPlayhead(t){
+  if (!el.follow.checked || audio.paused || drag) return;
+  const w = el.scroll.clientWidth, x = t * pps, sl = el.scroll.scrollLeft;
+  if (x < sl + w * 0.05 || x > sl + w * 0.8) el.scroll.scrollLeft = x - w * 0.25;
+}
+
+function tick(){
+  const t = audio.currentTime || 0;
+  if (loop && !audio.paused && t >= loop.end - 0.01) seek(loop.start);
+  followPlayhead(t);
+  syncVideo(audio.currentTime || 0);
+  updateLive(audio.currentTime || 0);
+  if (dirty || !audio.paused) { draw(); dirty = false; }
+  requestAnimationFrame(tick);
+}
+
+/* ---------- zoom ---------- */
+const zoomToPps = v => MIN_PPS * Math.pow(MAX_PPS / MIN_PPS, v / 100);
+const ppsToZoom = p => 100 * Math.log(p / MIN_PPS) / Math.log(MAX_PPS / MIN_PPS);
+function setPps(np, anchorX){
+  np = clamp(np, MIN_PPS, MAX_PPS);
+  const w = el.scroll.clientWidth;
+  if (anchorX == null) anchorX = clamp((audio.currentTime || 0) * pps - el.scroll.scrollLeft, 0, w) || w / 2;
+  const at = (el.scroll.scrollLeft + anchorX) / pps;
+  pps = np; el.zoom.value = ppsToZoom(pps);
+  layoutTimeline();
+  el.scroll.scrollLeft = at * pps - anchorX;
+  dirty = true;
+}
+function fit(){
+  const w = el.scroll.clientWidth - 40;
+  setPps(duration ? w / duration : 40, 0);
+  el.scroll.scrollLeft = 0;
+}
+el.zoom.addEventListener('input', () => setPps(zoomToPps(+el.zoom.value)));
+el.fitBtn.addEventListener('click', fit);
+el.scroll.addEventListener('wheel', e => {
+  if (!(e.ctrlKey || e.metaKey)) {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && !e.shiftKey) { el.scroll.scrollLeft += e.deltaY; e.preventDefault(); }
+    return;
+  }
+  e.preventDefault();
+  const r = el.scroll.getBoundingClientRect();
+  setPps(pps * Math.pow(1.0018, -e.deltaY), e.clientX - r.left);
+}, {passive:false});
+el.scroll.addEventListener('scroll', () => dirty = true);
+window.addEventListener('resize', () => { layoutTimeline(); dirty = true; });
+
+/* ---------- timeline pointer interactions ---------- */
+const timeAt = e => (e.clientX - el.inner.getBoundingClientRect().left) / pps;
+el.inner.addEventListener('pointerdown', e => {
+  if (e.button !== 0 || !duration) return;
+  const bh = e.target.closest('.barh');
+  if (bh) {
+    const follow = el.followBars.checked ? routine.steps.map(s => ({s, b0:beatAt(s.start), b1:beatAt(s.end)})) : null;
+    drag = { mode:'bar', i:+bh.dataset.i, el:bh, x0:e.clientX, orig:null, follow, moved:false };
+    bh.classList.add('drag');
+    el.inner.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    return;
+  }
+  const blk = e.target.closest('.block');
+  if (blk) {
+    const s = byId(blk.dataset.id); if (!s) return;
+    select(s.id);
+    const r = blk.getBoundingClientRect(), ox = e.clientX - r.left, edge = Math.min(9, r.width / 3);
+    const mode = ox < edge ? 'start' : ox > r.width - edge ? 'end' : 'move';
+    drag = { mode, s, el:blk, x0:e.clientX, start0:s.start, end0:s.end, moved:false };
+    if (mode === 'move') blk.style.cursor = 'grabbing';
+  } else {
+    drag = { mode:'scrub' };
+    seek(timeAt(e));
+  }
+  el.inner.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+el.inner.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (drag.mode === 'scrub') { seek(timeAt(e)); return; }
+  if (!drag.moved && Math.abs(e.clientX - drag.x0) < 3) return;
+  drag.moved = true; snapshot();
+  if (drag.mode === 'bar') {
+    if (!drag.orig) { materializeBars(); drag.orig = routine.bars.slice(); }
+    const B = routine.bars, o = drag.orig, i = drag.i, d = (e.clientX - drag.x0) / pps;
+    const lo = i > 0 ? o[i - 1] + 0.3 : 0, end = duration || Infinity;
+    if (e.shiftKey) {
+      const delta = clamp(d, lo - o[i], end - o[o.length - 1]);
+      for (let j = 0; j < o.length; j++) B[j] = j >= i ? o[j] + delta : o[j];
+    } else {
+      for (let j = 0; j < o.length; j++) B[j] = o[j];
+      B[i] = clamp(o[i] + d, lo, i < o.length - 1 ? o[i + 1] - 0.3 : end);
+    }
+    if (drag.follow) {
+      for (const f of drag.follow) {
+        f.s.start = Math.max(0, timeOfBeat(f.b0));
+        f.s.end = Math.max(f.s.start + 0.1, timeOfBeat(f.b1));
+      }
+      el.inner.querySelectorAll('.block').forEach(b => { const s = byId(b.dataset.id); if (s) positionBlock(s, b); });
+    }
+    positionBars();
+    drag.el.title = `8-count ${i + 1} at ${fmt(B[i])}`;
+    dirty = true;
+    return;
+  }
+  const s = drag.s, dt = (e.clientX - drag.x0) / pps, sn = !e.altKey, M = maxT();
+  if (drag.mode === 'move') {
+    const len = drag.end0 - drag.start0;
+    s.start = clamp(snapT(drag.start0 + dt, sn), 0, Math.max(0, M - len));
+    s.end = s.start + len;
+  } else if (drag.mode === 'start') {
+    s.start = clamp(snapT(drag.start0 + dt, sn), 0, s.end - 0.1);
+  } else {
+    s.end = clamp(snapT(drag.end0 + dt, sn), s.start + 0.1, M);
+  }
+  positionBlock(s, drag.el); blockLabel(s, drag.el); updateCardTimes(s);
+  dirty = true;
+});
+function endDrag(){
+  if (!drag) return;
+  if (drag.el) { drag.el.style.cursor = ''; drag.el.classList.remove('drag'); }
+  if (drag.moved) { sortSteps(); save(); refreshLoop(); renderAll(); }
+  else if (drag.mode === 'bar') { const t = barTimes()[drag.i]; if (t != null) seek(t); }
+  drag = null;
+}
+el.inner.addEventListener('pointerup', endDrag);
+el.inner.addEventListener('pointercancel', endDrag);
+el.inner.addEventListener('dblclick', e => {
+  if (!duration) return;
+  const bh = e.target.closest('.barh');
+  if (bh) { deleteBar(+bh.dataset.i); return; }
+  const blk = e.target.closest('.block');
+  if (blk) { const s = byId(blk.dataset.id); if (s) playFrom(s); return; }
+  const y = e.clientY - el.inner.getBoundingClientRect().top;
+  if (y >= LANE_TOP) addStepAt(timeAt(e), {focus:true});
+  else if (y >= RULER_H && y < WAVE_TOP) addBar(timeAt(e));
+});
+
+/* ---------- step card interactions ---------- */
+el.list.addEventListener('input', e => {
+  const c = e.target.closest('.sc'); if (!c) return;
+  const s = byId(c.dataset.id); if (!s) return;
+  if (e.target.matches('.sc-name')) {
+    s.name = e.target.value;
+    const b = el.inner.querySelector(`.block[data-id="${s.id}"]`); if (b) blockLabel(s, b);
+    if (loop && loop.id === s.id) renderLoop();
+  } else if (e.target.matches('.sc-notes')) s.notes = e.target.value;
+  else return;
+  el.nowName._v = el.nowNotes._v = el.nextName._v = el.nextNotes._v = null;
+  save();
+});
+el.list.addEventListener('change', e => {
+  const c = e.target.closest('.sc'); if (!c) return;
+  const s = byId(c.dataset.id); if (!s) return;
+  if (!e.target.matches('.sc-start,.sc-end')) return;
+  const v = parseTime(e.target.value);
+  if (v == null) { updateCardTimes(s); return; }
+  snapshot();
+  if (e.target.matches('.sc-start')) { s.start = clamp(v, 0, maxT()); if (s.end <= s.start + 0.1) s.end = Math.min(maxT(), s.start + defLen(s.start)); }
+  else s.end = clamp(v, s.start + 0.1, Math.max(maxT(), s.start + 0.1));
+  sortSteps(); save(); refreshLoop(); renderAll();
+});
+el.list.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches('.sc-start,.sc-end,.sc-name')) e.target.blur();
+});
+el.list.addEventListener('focusin', e => {
+  const c = e.target.closest('.sc'); if (c && c.dataset.id !== selectedId) {
+    selectedId = c.dataset.id;
+    el.inner.querySelectorAll('.block').forEach(b => b.classList.toggle('sel', b.dataset.id === selectedId));
+    el.list.querySelectorAll('.sc').forEach(x => x.classList.toggle('sel', x === c));
+  }
+});
+el.list.addEventListener('click', e => {
+  const c = e.target.closest('.sc'); if (!c) return;
+  const s = byId(c.dataset.id); if (!s) return;
+  const btn = e.target.closest('[data-act]');
+  if (!btn) { if (!e.target.closest('input,textarea')) select(s.id); return; }
+  const now = audio.currentTime || 0;
+  switch (btn.dataset.act) {
+    case 'play': select(s.id); playFrom(s); return;
+    case 'loop': toggleLoop(s); return;
+    case 'del': deleteStep(s.id); return;
+    case 'color': s.color = PALETTE[(PALETTE.indexOf(s.color) + 1) % PALETTE.length]; break;
+    case 'setStart': snapshot(); setStepStart(s, now); break;
+    case 'setEnd': snapshot(); setStepEnd(s, now); break;
+  }
+  sortSteps(); save(); refreshLoop(); renderAll(); select(s.id);
+});
+function setStepStart(s, t){ s.start = clamp(snapT(t), 0, maxT()); if (s.end <= s.start + 0.1) s.end = Math.min(maxT(), s.start + defLen(s.start)); }
+function setStepEnd(s, t){ s.end = Math.max(snapT(t), s.start + 0.1); }
+
+/* ---------- tempo ---------- */
+function tap(){
+  const playing = !!audio.src && !audio.paused;
+  const now = playing ? audio.currentTime : performance.now() / 1000;
+  const last = taps[taps.length - 1];
+  if (tapMode !== playing || last == null || now - last > 2.5 || now <= last) { taps = []; tapFirst = now; tapMode = playing; }
+  taps.push(now); if (taps.length > 12) taps.shift();
+  el.tapBtn.firstChild.textContent = `Tap tempo (${taps.length}) `;
+  clearTimeout(tap.t); tap.t = setTimeout(() => { el.tapBtn.firstChild.textContent = 'Tap tempo '; }, 2600);
+  if (taps.length < 3) return;
+  const avg = (taps[taps.length - 1] - taps[0]) / (taps.length - 1);
+  const bpm = Math.round(600 / avg) / 10;
+  if (bpm < 30 || bpm > 260) return;
+  routine.bpm = bpm;
+  if (playing) { const bar = 8 * 60 / bpm; routine.offset = Math.round(mod(tapFirst, bar) * 1000) / 1000; }
+  syncTempoInputs(); save(); renderAll();
+}
+function syncTempoInputs(){
+  el.bpm.value = routine.bpm ? Math.round(routine.bpm * 100) / 100 : '';
+  el.offset.value = routine.offset ? routine.offset.toFixed(2) : '0';
+  if (typeof applyVideoUI === "function") applyVideoUI();
+}
+el.tapBtn.addEventListener('click', tap);
+el.bpm.addEventListener('change', () => { const v = parseFloat(el.bpm.value); routine.bpm = v > 0 && v < 400 ? v : 0; syncTempoInputs(); save(); renderAll(); });
+el.offset.addEventListener('input', () => { const v = parseFloat(el.offset.value); routine.offset = v >= 0 ? v : 0; save(); dirty = true; lastActiveKey = '#'; });
+el.offset.addEventListener('change', renderAll);
+el.barsResetBtn.addEventListener('click', () => {
+  if (!manualBars()) return;
+  if (!confirm(`Remove your ${routine.bars.length} hand-placed bars and go back to the even BPM grid?`)) return;
+  snapshot(); routine.bars = []; save(); renderAll();
+});
+
+/* ---------- undo ---------- */
+let undoStack = [];
+function snapshot(){
+  undoStack.push(JSON.stringify(routine));
+  if (undoStack.length > 80) undoStack.shift();
+  el.undoBtn.disabled = false;
+}
+function undo(){
+  const snap = undoStack.pop();
+  el.undoBtn.disabled = !undoStack.length;
+  if (!snap) { toast('Nothing to undo'); return; }
+  const media = routine.media;              // uploaded files aren't part of undo
+  routine = normalize(JSON.parse(snap));
+  routine.media = media;
+  if (selectedId && !byId(selectedId)) selectedId = null;
+  applyRoutineToUI(); save(); refreshLoop(); renderAll();
+  toast('Undone');
+}
+el.undoBtn.addEventListener('click', undo);
+
+/* ---------- shift / stretch the whole routine ---------- */
+function xfTargets(){
+  const steps = el.xfSteps.checked, bars = el.xfBars.checked;
+  if (!steps && !bars) { toast('Tick Steps and/or Bars first'); return null; }
+  return {steps, bars};
+}
+function applyMap(map, k, tg){
+  snapshot();
+  if (tg.steps) for (const s of routine.steps) {
+    const a = Math.max(0, map(s.start));
+    s.start = a; s.end = Math.max(a + 0.1, map(s.end));
+  }
+  if (tg.bars) {
+    if (manualBars()) {
+      routine.bars = routine.bars.map(map).filter(t => t >= 0);
+    } else if (routine.bpm > 0) {
+      routine.bpm = routine.bpm / k;
+      let off = map(routine.offset);
+      if (off < 0) off = mod(off, 480 / routine.bpm);
+      routine.offset = Math.round(off * 10000) / 10000;
+    }
+  }
+  sortSteps(); syncTempoInputs(); save(); refreshLoop(); renderAll();
+}
+function shiftAll(delta){
+  const tg = xfTargets(); if (!tg || !isFinite(delta) || !delta) return;
+  const mins = [];
+  if (tg.steps && routine.steps.length) mins.push(routine.steps[0].start);
+  if (tg.bars && manualBars()) mins.push(routine.bars[0]);
+  const minT = mins.length ? Math.min(...mins) : Infinity;
+  if (delta < -minT) {
+    delta = -minT;
+    if (delta === 0) { toast("Can't move earlier: something already starts at 0:00"); return; }
+    toast(`Moved as far as 0:00 allows (${delta.toFixed(2)}s)`);
+  }
+  applyMap(t => t + delta, 1, tg);
+}
+function pivotTime(tg){
+  const v = el.xfPivot.value;
+  if (v === 'zero') return 0;
+  if (v === 'playhead') return audio.currentTime || 0;
+  const c = [];
+  if (tg.steps && routine.steps.length) c.push(routine.steps[0].start);
+  if (tg.bars) { const bt = barTimes(); if (bt.length) c.push(bt[0]); }
+  return c.length ? Math.min(...c) : 0;
+}
+function stretchAll(k){
+  const tg = xfTargets(); if (!tg) return;
+  if (!(k > 0.05 && k < 20) || k === 1) return;
+  const p = pivotTime(tg);
+  applyMap(t => p + (t - p) * k, k, tg);
+}
+function lastTime(tg){
+  if (tg.steps && routine.steps.length) return Math.max(...routine.steps.map(s => s.end));
+  const bt = barTimes(); return bt.length ? bt[bt.length - 1] : null;
+}
+function updateXfSpan(){
+  if (!routine.steps.length) { el.xfSpan.textContent = ''; return; }
+  el.xfSpan.textContent = `Steps run ${fmt(routine.steps[0].start)} → ${fmt(Math.max(...routine.steps.map(s => s.end)))}`;
+}
+el.xfBtn.addEventListener('click', () => {
+  const on = !el.xf.classList.contains('on');
+  el.xf.classList.toggle('on', on); el.xfBtn.classList.toggle('on', on);
+  if (on && !el.xfFitVal.value) { const tg = {steps:true, bars:true}, l = lastTime(tg); if (l != null) el.xfFitVal.value = fmt(l); }
+});
+el.xf.addEventListener('click', e => {
+  const b = e.target.closest('[data-shift],[data-scale]'); if (!b) return;
+  if (b.dataset.shift) shiftAll(+b.dataset.shift); else stretchAll(+b.dataset.scale);
+});
+el.xfShiftApply.addEventListener('click', () => {
+  const v = parseFloat(String(el.xfShiftVal.value).replace(',', '.'));
+  if (!isFinite(v) || !v) { toast('Type a number of seconds, e.g. -1.25 or 0.5'); return; }
+  shiftAll(v);
+});
+el.xfScaleApply.addEventListener('click', () => {
+  const v = parseFloat(el.xfScaleVal.value);
+  if (!(v > 5 && v < 2000)) { toast('Type a percentage, e.g. 98.5 or 102'); return; }
+  stretchAll(v / 100); el.xfScaleVal.value = '';
+});
+el.xfFitNow.addEventListener('click', () => { el.xfFitVal.value = fmt(audio.currentTime || 0); });
+el.xfFitApply.addEventListener('click', () => {
+  const tg = xfTargets(); if (!tg) return;
+  const target = parseTime(el.xfFitVal.value), last = lastTime(tg), p = pivotTime(tg);
+  if (target == null) { toast('Type a time like 3:21.5'); return; }
+  if (last == null || last <= p + 0.1 || target <= p + 0.1) { toast('The end time must be after the anchor point'); return; }
+  stretchAll((target - p) / (last - p));
+  toast(`Stretched to ${(100 * (target - p) / (last - p)).toFixed(2)}%`);
+});
+[el.xfShiftVal, el.xfScaleVal, el.xfFitVal].forEach(i => i.addEventListener('keydown', e => {
+  if (e.key === 'Enter') ({xfShiftVal:el.xfShiftApply, xfScaleVal:el.xfScaleApply, xfFitVal:el.xfFitApply})[i.id].click();
+}));
+el.snap.addEventListener('change', () => { try { localStorage.setItem(STORE_KEY + '.snap', el.snap.checked ? '1' : '0'); } catch (e) {} });
+
+/* ---------- buttons & inputs ---------- */
+el.playBtn.addEventListener('click', togglePlay);
+el.backBtn.addEventListener('click', () => seek((audio.currentTime || 0) - 2));
+el.fwdBtn.addEventListener('click', () => seek((audio.currentTime || 0) + 2));
+el.speed.addEventListener('change', () => { audio.playbackRate = audio.defaultPlaybackRate = +el.speed.value; });
+el.leadIn.addEventListener('change', () => { routine.leadIn = +el.leadIn.value; save(); refreshLoop(); });
+el.loopClear.addEventListener('click', () => { loop = null; renderLoop(); });
+el.markBtn.addEventListener('click', () => { if (audio.src) addStepAt(audio.currentTime || 0, {focus: audio.paused}); else toast('Load a song first'); });
+el.addBtn.addEventListener('click', () => { if (audio.src) addStepAt(audio.currentTime || 0, {focus:true}); else toast('Load a song first'); });
+el.clearBtn.addEventListener('click', () => {
+  if (!routine.steps.length) return;
+  if (confirm(`Delete all ${routine.steps.length} steps? (Export first if you want a backup.)`)) { snapshot(); routine.steps = []; loop = null; renderLoop(); save(); renderAll(); }
+});
+el.title.addEventListener('input', () => { routine.title = el.title.value; document.title = (routine.title || 'First Dance') + ' · First Dance Planner'; save(); });
+/* ---------- rehearsal video ---------- */
+const fmtSigned = x => (x < 0 ? '−' : '') + fmt(Math.abs(x));
+function parseSigned(str){
+  str = String(str).trim().replace(/^[−–]/, '-');
+  if (str.startsWith('-')) { const v = parseTime(str.slice(1)); return v == null ? null : -v; }
+  return parseTime(str.replace(/^\+/, ''));
+}
+// src is a Blob (local file) or a URL string (streamed from the online copy)
+async function loadVideo(src, name, persist, mediaId = null){
+  if (videoUrl) URL.revokeObjectURL(videoUrl);
+  const isUrl = typeof src === 'string';
+  videoUrl = isUrl ? null : URL.createObjectURL(src);
+  videoOK = false;
+  video.src = isUrl ? src : videoUrl;
+  const blob = isUrl ? null : src;
+  const ok = await new Promise(res => {
+    video.addEventListener('loadedmetadata', () => res(true), {once:true});
+    video.addEventListener('error', () => res(false), {once:true});
+  });
+  if (!ok) { toast("Sorry, this browser can't play that video (MP4/H.264 works best)"); return; }
+  if (persist && name !== routine.video.name) {   // a different video: start with a fresh sync
+    snapshot();
+    Object.assign(routine.video, {start:0, rate:1});
+    vPoints = [];
+  }
+  routine.video.name = name || 'Video';
+  videoOK = true;
+  videoBlob = blob; videoMediaId = mediaId;
+  vel.vidCard.classList.remove('hidden');
+  applyVideoUI(); dirty = true;
+  if (persist) save();
+  if (persist && cloud) queueUpload('video');
+  if (persist) { try { await idbSet('video', {blob, name:routine.video.name, mediaId:null}); } catch (e) { toast("Video loaded, but it's too big to remember for next time"); } }
+}
+// fromRemote: another device removed it, so only clear it here
+function removeVideo(fromRemote = false){
+  video.pause(); video.removeAttribute('src'); video.load();
+  if (videoUrl) URL.revokeObjectURL(videoUrl);
+  videoUrl = null; videoOK = false; vPoints = []; setFree(false);
+  videoBlob = null; videoMediaId = null;
+  vel.vidCard.classList.add('hidden');
+  if (!fromRemote) {
+    const old = routine.media.video;
+    routine.video.name = ''; routine.media.video = null; save();
+    if (old && cloud) setTimeout(() => deleteMedia(old.id), 3000);
+  }
+  dirty = true;
+  idbSet('video', null).catch(() => {});
+}
+function applyVideoUI(){
+  const V = routine.video;
+  if (document.activeElement !== vel.vStart) vel.vStart.value = fmtSigned(V.start);
+  if (document.activeElement !== vel.vRate) vel.vRate.value = (V.rate * 100).toFixed(2);
+  vel.vBpm.value = V.bpm || '';
+  vel.vSongBpm.textContent = routine.bpm ? (Math.round(routine.bpm * 10) / 10) + ' BPM' : '— (set song BPM)';
+  vel.vVol.value = V.volume;
+  vel.vVolTxt.textContent = V.volume > 0 ? Math.round(V.volume * 100) + '%' : 'off';
+  video.volume = V.volume; video.muted = V.volume === 0;
+  vel.vMirror.checked = V.mirror; vel.vidStage.classList.toggle('mirror', V.mirror);
+  vel.vSize.value = V.size;
+  vel.vidStage.style.setProperty('--vh', {s:'220px', m:'360px', l:'62vh'}[V.size]);
+  vel.vidName.textContent = V.name;
+  vel.vidName.title = V.name;
+  vel.vPts.textContent = vPoints.length ? `${vPoints.length} sync point${vPoints.length > 1 ? 's' : ''} set` : '';
+  vel.vPtsClear.hidden = !vPoints.length;
+  vel.vidBadge.textContent = Math.abs(V.rate - 1) > 0.0005 ? `${(V.rate * 100).toFixed(1)}% speed` : '';
+  vel.vidBadge.style.display = vel.vidBadge.textContent ? '' : 'none';
+}
+// change video speed, keeping the frame currently under the playhead in place
+function setVideoRate(r){
+  if (!(r >= 0.25 && r <= 4)) { toast('Video speed must be between 25% and 400%'); applyVideoUI(); return; }
+  const V = routine.video, t = audio.currentTime || 0;
+  const v0 = (t - V.start) * V.rate;
+  snapshot();
+  V.rate = r; V.start = t - v0 / r;
+  save(); applyVideoUI(); dirty = true;
+}
+function setVideoStart(s){ snapshot(); routine.video.start = s; save(); applyVideoUI(); dirty = true; }
+let lastOver = '';
+function setOverlay(msg){ if (msg !== lastOver) { lastOver = msg; vel.vidOver.textContent = msg; vel.vidOver.classList.toggle('on', !!msg); } }
+function syncVideo(t){
+  if (!videoOK) return;
+  if (vFree) {
+    setText(vel.vTime, 'video ' + fmt(video.currentTime) + ' · song ' + fmt(t));
+    if (document.activeElement !== vel.vScrub) vel.vScrub.value = video.currentTime;
+    vel.vPlayFree.textContent = video.paused ? '▶ video' : '❚❚ video';
+    setOverlay('Unlinked: move video & song separately');
+    return;
+  }
+  const V = routine.video, dur = video.duration || 0;
+  const target = (t - V.start) * V.rate;
+  if (target < 0 || target >= dur - 0.04) {
+    if (!video.paused) video.pause();
+    const c = clamp(target, 0, Math.max(0, dur - 0.04));
+    if (!video.seeking && Math.abs(video.currentTime - c) > 0.05) video.currentTime = c;
+    setOverlay(target < 0 ? `Video starts in ${(V.start - t).toFixed(1)}s` : 'Video ended');
+    return;
+  }
+  setOverlay('');
+  if (audio.paused) {
+    if (!video.paused) video.pause();
+    if (!video.seeking && Math.abs(video.currentTime - target) > 0.03) video.currentTime = target;
+    return;
+  }
+  const base = clamp(V.rate * audio.playbackRate, 0.0625, 16);
+  const drift = video.currentTime - target;
+  let rate = base;
+  if (Math.abs(drift) > 0.3) { if (!video.seeking) video.currentTime = target; }
+  else rate = clamp(base * (1 - clamp(drift, -0.1, 0.1) * 0.8), 0.0625, 16);   // gentle catch-up
+  if (Math.abs(video.playbackRate - rate) > 0.002) video.playbackRate = rate;
+  if (video.paused && !video.seeking) video.play().catch(() => {});
+}
+function setFree(on){
+  vFree = on;
+  vel.vLink.classList.toggle('on', !on);
+  vel.vLink.textContent = on ? '⛓ Unlinked: click to relink' : '🔗 Linked to song';
+  vel.vSync.disabled = !on;
+  vel.vFree.hidden = !on;
+  if (on) { video.pause(); video.playbackRate = 1; vel.vScrub.max = video.duration || 1; }
+  else setOverlay('');
+}
+function addSyncPoint(){
+  const p = {v:video.currentTime, t:audio.currentTime || 0}, V = routine.video;
+  const pts = vPoints.concat([p]);
+  if (pts.length === 1) { snapshot(); V.start = p.t - p.v / V.rate; }
+  else {
+    const a = pts[0], b = pts[pts.length - 1];
+    if (Math.abs(b.t - a.t) < 1 || Math.abs(b.v - a.v) < 1) { toast('Pick sync points at least a few seconds apart'); return; }
+    const r = (b.v - a.v) / (b.t - a.t);
+    if (!(r >= 0.25 && r <= 4)) { toast(`Those points give a ${Math.round(r * 100)}% speed, which seems off. Try again`); return; }
+    snapshot(); V.rate = r; V.start = a.t - a.v / r;
+  }
+  vPoints = pts;
+  save(); applyVideoUI(); dirty = true;
+  toast(pts.length === 1 ? 'Sync point 1 set. Add another near the end to fix the speed' : `Synced: video at ${(V.rate * 100).toFixed(2)}% speed`);
+}
+vel.videoInput.addEventListener('change', () => { const f = vel.videoInput.files[0]; if (f) loadVideo(f, f.name, true); vel.videoInput.value = ''; });
+vel.vRemove.addEventListener('click', () => { if (confirm('Remove the rehearsal video? (Its sync settings are kept.)')) removeVideo(); });
+vel.vStart.addEventListener('change', () => { const v = parseSigned(vel.vStart.value); if (v == null) applyVideoUI(); else setVideoStart(v); });
+vel.vRate.addEventListener('change', () => setVideoRate(parseFloat(vel.vRate.value) / 100));
+vel.vidCard.addEventListener('click', e => {
+  const b = e.target.closest('[data-vs],[data-vr]'); if (!b) return;
+  if (b.dataset.vs) setVideoStart(routine.video.start + parseFloat(b.dataset.vs));
+  else setVideoRate(routine.video.rate * parseFloat(b.dataset.vr));
+});
+vel.vBpm.addEventListener('change', () => { const v = parseFloat(vel.vBpm.value); routine.video.bpm = v > 0 ? v : 0; save(); });
+vel.vMatch.addEventListener('click', () => {
+  const vb = parseFloat(vel.vBpm.value);
+  if (!(vb > 0)) { toast("Type the rehearsal music's BPM first"); return; }
+  if (!(routine.bpm > 0)) { toast('Set the song BPM first (in the timeline toolbar)'); return; }
+  routine.video.bpm = vb;
+  setVideoRate(routine.bpm / vb);
+  toast(`Video set to ${(routine.bpm / vb * 100).toFixed(1)}% speed`);
+});
+vel.vLink.addEventListener('click', () => setFree(!vFree));
+vel.vSync.addEventListener('click', addSyncPoint);
+vel.vPtsClear.addEventListener('click', () => { vPoints = []; applyVideoUI(); });
+vel.vBack.addEventListener('click', () => { video.pause(); video.currentTime = Math.max(0, video.currentTime - 1 / 30); });
+vel.vFwd.addEventListener('click', () => { video.pause(); video.currentTime = Math.min(video.duration || 0, video.currentTime + 1 / 30); });
+vel.vPlayFree.addEventListener('click', () => { if (video.paused) video.play().catch(() => {}); else video.pause(); });
+vel.vScrub.addEventListener('input', () => { video.currentTime = +vel.vScrub.value; });
+vel.vVol.addEventListener('input', () => { routine.video.volume = +vel.vVol.value; save(); applyVideoUI(); });
+vel.vMirror.addEventListener('change', () => { routine.video.mirror = vel.vMirror.checked; save(); applyVideoUI(); });
+vel.vSize.addEventListener('change', () => { routine.video.size = vel.vSize.value; save(); applyVideoUI(); });
+[vel.vStart, vel.vRate, vel.vBpm].forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') i.blur(); }));
+
+el.audioInput.addEventListener('change', () => { const f = el.audioInput.files[0]; if (f) loadAudio(f, f.name, true); el.audioInput.value = ''; });
+el.importInput.addEventListener('change', async () => { const f = el.importInput.files[0]; if (f) await importFile(f); el.importInput.value = ''; });
+el.exportBtn.addEventListener('click', () => {
+  const data = JSON.stringify(Object.assign({}, routine, {media: undefined, song: audioName || undefined, exported: new Date().toISOString()}), null, 2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data], {type:'application/json'}));
+  a.download = (routine.title || 'first-dance').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.dance.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+async function importFile(f){
+  try {
+    const obj = JSON.parse(await f.text());
+    if (!obj || !Array.isArray(obj.steps)) throw new Error('bad');
+    if (routine.steps.length && !confirm('Replace the current routine with the imported one?')) return;
+    snapshot();
+    const media = routine.media;            // keep this routine's uploaded song/video
+    routine = normalize(obj); routine.media = media; selectedId = null; loop = null;
+    applyRoutineToUI(); save(); renderLoop(); renderAll();
+    toast(`Imported ${routine.steps.length} steps` + (obj.song && obj.song !== audioName ? ` (song: ${obj.song})` : ''));
+  } catch (e) { toast("That doesn't look like a routine file"); }
+}
+function applyRoutineToUI(){
+  el.title.value = routine.title;
+  document.title = (routine.title || 'First Dance') + ' · First Dance Planner';
+  syncTempoInputs();
+  el.leadIn.value = String(routine.leadIn);
+  if (el.leadIn.value === '') el.leadIn.value = '2';
+  applyVideoUI();
+}
+
+/* practice view */
+function togglePractice(force){
+  const on = force != null ? force : !document.body.classList.contains('practice');
+  document.body.classList.toggle('practice', on);
+  el.practiceBtn.classList.toggle('on', on);
+  try {
+    if (on && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+    if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  } catch (e) {}
+  setTimeout(() => { layoutTimeline(); dirty = true; }, 60);
+}
+el.practiceBtn.addEventListener('click', () => togglePractice());
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && document.body.classList.contains('practice')) togglePractice(false); });
+el.helpBtn.addEventListener('click', () => el.help.showModal());
+
+/* drag & drop */
+let dragDepth = 0;
+window.addEventListener('dragenter', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { dragDepth++; document.body.classList.add('dragging'); } });
+window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); } });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => {
+  e.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging');
+  const f = e.dataTransfer.files[0]; if (!f) return;
+  if (/\.json$/i.test(f.name) || f.type === 'application/json') importFile(f);
+  else if (f.type.startsWith('video/') || /\.(mp4|mov|m4v|mkv|avi|webm)$/i.test(f.name)) loadVideo(f, f.name, true);
+  else if (f.type.startsWith('audio/') || /\.(mp3|m4a|wav|ogg|flac|aac|opus)$/i.test(f.name)) loadAudio(f, f.name, true);
+  else toast('Drop a song, a video, or a .dance.json routine');
+});
+
+/* keyboard */
+document.addEventListener('keydown', e => {
+  const tg = e.target;
+  if (tg.matches('input:not([type=checkbox]):not([type=range]),textarea,select') || tg.isContentEditable) {
+    if (e.key === 'Escape') tg.blur();
+    return;
+  }
+  if (el.help.open) return;
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); undo(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = audio.currentTime || 0, sel = selectedId && byId(selectedId);
+  const target = sel || activeStep(t);
+  let handled = true;
+  switch (e.key) {
+    case ' ': togglePlay(); break;
+    case 'm': case 'M': if (audio.src) addStepAt(t); break;
+    case 't': case 'T': tap(); break;
+    case 'b': case 'B': if (audio.src) addBar(t, {tapped:true}); break;
+    case ',': shiftAll(-0.05); break;
+    case '.': shiftAll(0.05); break;
+    case '<': shiftAll(-0.5); break;
+    case '>': shiftAll(0.5); break;
+    case 'l': case 'L': if (target) toggleLoop(target); break;
+    case 'f': case 'F': togglePractice(); break;
+    case 'Escape': if (loop) { loop = null; renderLoop(); } else if (document.body.classList.contains('practice')) togglePractice(false); else if (selectedId) select(null); break;
+    case 'ArrowLeft': seek(t - (e.shiftKey ? 10 : 2)); break;
+    case 'ArrowRight': seek(t + (e.shiftKey ? 10 : 2)); break;
+    case 'ArrowUp': { const prev = [...routine.steps].reverse().find(s => s.start < t - 0.4); seek(prev ? prev.start : 0); if (prev) select(prev.id); break; }
+    case 'ArrowDown': { const nx = routine.steps.find(s => s.start > t + 0.01); if (nx) { seek(nx.start); select(nx.id); } break; }
+    case 'Enter': if (target) { select(target.id); playFrom(target); } break;
+    case '[': if (sel) { snapshot(); setStepStart(sel, t); sortSteps(); save(); refreshLoop(); renderAll(); } break;
+    case ']': if (sel) { snapshot(); setStepEnd(sel, t); sortSteps(); save(); refreshLoop(); renderAll(); } break;
+    case 'Delete': case 'Backspace': if (sel) deleteStep(sel.id); break;
+    case '+': case '=': setPps(pps * 1.4); break;
+    case '-': case '_': setPps(pps / 1.4); break;
+    case 'Home': seek(0); break;
+    case '?': el.help.showModal(); break;
+    default: handled = false;
+  }
+  if (handled) e.preventDefault();
+});
+
+/* ---------- online sync ----------
+   The routine lives in the wedding API (the WeddingApi Cloudflare Worker, kind "dance") as well as in
+   localStorage, and the song and video live in its R2 bucket (routine.media holds their ids).
+   #edit=<id>.<key> opens it on another device. Each save carries the version it was based on; if another
+   device saved first, theirs is loaded and Undo brings yours back. */
+const API = 'https://wedding-api.brestel-jason-e99.workers.dev/docs';
+const CLOUD_KEY = 'danceRoutine.cloud';
+const CLOUD_ORIGINS = ['https://candlebird.github.io', 'http://127.0.0.1:8765', 'http://localhost:8765'];
+const HOSTED_URL = 'https://candlebird.github.io/dance-routine/';
+const CHUNK = 8 * 1024 * 1024;   // upload part size (R2 needs at least 5 MB per part except the last)
+const cel = {};
+['cloudBtn','cloudDlg','cloudOff','cloudOn','cloudWhere','cloudCancel','goOnline','editLink','copyLink','qr','qrHint','cloudFiles','unlink']
+  .forEach(id => cel[id] = $(id));
+let pushTimer, pushing = false, edits = 0, cloudState = 'ok';
+const uploads = {}, downloads = {};
+
+const canCloud = () => CLOUD_ORIGINS.includes(location.origin);
+const editUrl = () => `${location.origin}${location.pathname}#edit=${cloud.id}.${cloud.key}`;
+const mediaUrl = id => `${API}/${cloud.id}/media/${id}`;
+function saveCloudLocal(){
+  try { cloud ? localStorage.setItem(CLOUD_KEY, JSON.stringify(cloud)) : localStorage.removeItem(CLOUD_KEY); } catch (e) {}
+}
+const KIND_LABEL = {song:'song', video:'video'};
+function showCloud(){
+  let text, title;
+  const up = Object.keys(uploads)[0], down = Object.keys(downloads)[0];
+  if (!cloud) { text = '☁ Save online'; title = 'Save online to open on your phone or other computers'; }
+  else if (up) { text = `☁ Uploading ${KIND_LABEL[up]} ${Math.round(uploads[up].p * 100)}%`; title = 'Uploading. Keep this page open until it finishes'; }
+  else if (down) { text = `☁ Downloading ${KIND_LABEL[down]} ${Math.round(downloads[down] * 100)}%`; title = 'Getting the file from the online copy'; }
+  else if (cloudState === 'offline') { text = '☁ Offline'; title = "Saved on this device; it will save online when you're back online"; }
+  else if (cloudState === 'error') { text = '☁ Not saved online'; title = 'Something went wrong saving online. Click for details'; }
+  else if (cloud.dirty) { text = '☁ Saving…'; title = 'Saving your changes online'; }
+  else { text = '☁ Synced'; title = 'Saved online. Click for the link to open it on other devices'; }
+  cel.cloudBtn.textContent = text; cel.cloudBtn.title = title;
+  cel.cloudBtn.classList.toggle('on', !!cloud && !cloud.dirty && cloudState === 'ok' && !up && !down);
+  if (cel.cloudDlg.open && cloud) renderCloudFiles();
+}
+function cloudDirty(){
+  if (!cloud) return;
+  edits++;
+  cloud.dirty = true;
+  saveCloudLocal(); showCloud();
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(push, 1500);
+}
+async function push(){
+  if (!cloud || !cloud.dirty) return;
+  if (pushing) { pushTimer = setTimeout(push, 500); return; }
+  pushing = true;
+  const at = edits, c = cloud;
+  try {
+    const res = await fetch(`${API}/${c.id}`, {
+      method:'PUT', headers:{ Authorization:`Bearer ${c.key}`, 'Content-Type':'application/json' },
+      body: JSON.stringify({ version:c.version, data:routine }),
+    });
+    if (c !== cloud) return;
+    const body = await res.json().catch(() => ({}));
+    if (res.ok) {
+      cloud.version = body.version; cloudState = 'ok';
+      if (at === edits) cloud.dirty = false;
+      saveCloudLocal(); showCloud();
+      if (cloud.dirty) pushTimer = setTimeout(push, 300);
+    } else if (res.status === 409) {
+      applyRemote(body.current, 'Your partner saved changes first. Their version is loaded; Undo brings yours back');
+    } else {
+      cloudState = 'error'; showCloud();
+      toast('Could not save online: ' + (body.error === 'Wrong key' ? 'this link no longer allows saving' : (body.error || res.status)));
+    }
+  } catch (e) {
+    cloudState = 'offline'; showCloud();
+    pushTimer = setTimeout(push, 10000);
+  } finally {
+    pushing = false;
+  }
+}
+function applyRemote(doc, msg){
+  snapshot();
+  cloudSuppress = true;
+  try {
+    routine = normalize(doc.data);
+    cloud.version = doc.version; cloud.dirty = false; cloudState = 'ok';
+    if (selectedId && !byId(selectedId)) selectedId = null;
+    applyRoutineToUI(); save(); refreshLoop(); renderAll();
+  } finally { cloudSuppress = false; }
+  saveCloudLocal(); showCloud();
+  ensureMedia();
+  if (msg) toast(msg);
+}
+const busy = () => !!drag || el.help.open || (document.activeElement && document.activeElement.matches('input:not([type=checkbox]):not([type=range]),textarea'));
+async function pull(force){
+  if (!cloud || cloud.dirty || pushing || (!force && (document.hidden || busy()))) return;
+  try {
+    const c = cloud;
+    const res = await fetch(`${API}/${c.id}`);
+    if (c !== cloud) return;
+    if (res.status === 404) { cloudState = 'error'; showCloud(); toast('This routine was not found online'); return; }
+    const doc = await res.json();
+    if (!res.ok) throw new Error();
+    if (doc.kind !== 'dance') { toast("That link isn't a dance routine"); disconnect(true); return; }
+    cloudState = 'ok';
+    if (!cloud.dirty && doc.version !== cloud.version) {
+      applyRemote(doc, cloud.version === 0 ? 'Opened the online routine' : 'Loaded changes made on another device');
+    } else { showCloud(); ensureMedia(); }
+  } catch (e) {
+    cloudState = 'offline'; showCloud();
+  }
+}
+
+/* media: keep this device's song/video matching routine.media */
+let mediaReady;                       // resolves once the files saved on this device are loaded at startup
+let ensuring = null, ensureAgain = false;
+function ensureMedia(){
+  if (ensuring) { ensureAgain = true; return ensuring; }
+  ensuring = (async () => {
+    try { await mediaReady; await ensureMediaOnce(); }
+    finally {
+      ensuring = null;
+      if (ensureAgain) { ensureAgain = false; ensureMedia(); }
+    }
+  })();
+  return ensuring;
+}
+async function ensureMediaOnce(){
+  if (!cloud) return;
+  const M = routine.media;
+  if (M.song && M.song.id !== songMediaId && !uploads.song) {
+    const rec = await idbGet('audio').catch(() => null);
+    if (rec && rec.blob && rec.mediaId === M.song.id) await loadAudio(rec.blob, rec.name, false, M.song.id);
+    else {
+      const want = M.song;
+      downloads.song = 0; showCloud();
+      try {
+        const blob = await download(mediaUrl(want.id), want.size, want.type, p => { downloads.song = p; showCloud(); });
+        if (routine.media.song && routine.media.song.id === want.id) {
+          await loadAudio(blob, want.name, false, want.id);
+          idbSet('audio', {blob, name:want.name, mediaId:want.id}).catch(() => {});
+        }
+      } catch (e) { toast("Couldn't download the song: " + e.message); }
+      finally { delete downloads.song; showCloud(); }
+    }
+  }
+  if (M.video && M.video.id !== videoMediaId && !uploads.video) {
+    const rec = await idbGet('video').catch(() => null);
+    if (rec && rec.blob && rec.mediaId === M.video.id) await loadVideo(rec.blob, rec.name, false, M.video.id);
+    else await loadVideo(mediaUrl(M.video.id), routine.video.name || M.video.name, false, M.video.id);   // streams, so it starts right away
+  } else if (!M.video && videoMediaId && !uploads.video) {
+    removeVideo(true);                // removed on another device
+  }
+}
+async function download(url, size, type, onp){
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(res.status === 404 ? 'file not found online' : 'error ' + res.status);
+  const total = +res.headers.get('Content-Length') || size || 0;
+  if (!res.body || !total) return new Blob([await res.arrayBuffer()], {type});
+  const reader = res.body.getReader(), chunks = [];
+  let got = 0;
+  for (;;) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    chunks.push(value); got += value.length;
+    onp(Math.min(1, got / total));
+  }
+  return new Blob(chunks, {type});
+}
+function guessType(name){
+  const ext = (String(name).match(/\.(\w+)$/) || [])[1] || '';
+  return ({mp3:'audio/mpeg', m4a:'audio/mp4', aac:'audio/aac', wav:'audio/wav', ogg:'audio/ogg', opus:'audio/ogg', flac:'audio/flac',
+    mp4:'video/mp4', m4v:'video/mp4', mov:'video/quicktime', webm:'video/webm', mkv:'video/x-matroska'})[ext.toLowerCase()] || '';
+}
+async function uploadBlob(blob, name, onp){
+  const c = cloud, auth = { Authorization:`Bearer ${c.key}` };
+  const type = blob.type || guessType(name);
+  const call = async (url, opts) => {
+    const r = await fetch(url, opts), b = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(b.error || ('error ' + r.status));
+    return b;
+  };
+  const st = await call(`${API}/${c.id}/media`, { method:'POST', headers:{...auth, 'Content-Type':'application/json'}, body:JSON.stringify({name, type, size:blob.size}) });
+  const parts = [];
+  for (let n = 1, o = 0; o < blob.size; n++, o += CHUNK) {
+    for (let tries = 1; ; tries++) {
+      try {
+        const p = await call(`${API}/${c.id}/media/${st.mediaId}/part?uploadId=${encodeURIComponent(st.uploadId)}&n=${n}`,
+          { method:'PUT', headers:auth, body:blob.slice(o, o + CHUNK) });
+        parts.push({ partNumber:n, etag:p.etag });
+        break;
+      } catch (e) {
+        if (tries >= 4 || c !== cloud) throw e;
+        await new Promise(z => setTimeout(z, 1500 * tries));
+      }
+    }
+    onp(Math.min(1, (o + CHUNK) / blob.size));
+  }
+  await call(`${API}/${c.id}/media/${st.mediaId}/complete`, { method:'POST', headers:{...auth, 'Content-Type':'application/json'}, body:JSON.stringify({uploadId:st.uploadId, parts}) });
+  return { id:st.mediaId, name, type, size:blob.size };
+}
+function deleteMedia(id){
+  if (!cloud || !id) return;
+  fetch(mediaUrl(id), { method:'DELETE', headers:{ Authorization:`Bearer ${cloud.key}` } }).catch(() => {});
+}
+function queueUpload(kind){
+  const blob = kind === 'song' ? songBlob : videoBlob;
+  if (!cloud || !blob) return;
+  const token = {}, c = cloud;
+  uploads[kind] = { p:0, token }; showCloud();
+  const name = kind === 'song' ? audioName : routine.video.name;
+  uploadBlob(blob, name, p => { if (uploads[kind] && uploads[kind].token === token) { uploads[kind].p = p; showCloud(); } })
+    .then(m => {
+      const cur = kind === 'song' ? songBlob : videoBlob;
+      if (cur !== blob || cloud !== c) { if (cloud === c) deleteMedia(m.id); return; }   // replaced while uploading
+      const old = routine.media[kind];
+      routine.media[kind] = m;
+      if (kind === 'song') songMediaId = m.id; else videoMediaId = m.id;
+      idbSet(kind === 'song' ? 'audio' : 'video', {blob, name, mediaId:m.id}).catch(() => {});
+      save();
+      if (old && old.id !== m.id) setTimeout(() => deleteMedia(old.id), 5000);
+      toast(`${kind === 'song' ? 'Song' : 'Video'} saved online`);
+    })
+    .catch(e => {
+      toast(`Couldn't upload the ${kind}: ${e.message}. It's still saved on this device. Open Save online to try again.`);
+    })
+    .finally(() => { if (uploads[kind] && uploads[kind].token === token) delete uploads[kind]; showCloud(); });
+}
+
+/* dialog */
+function renderCloudFiles(){
+  const line = (kind, label) => {
+    const m = routine.media[kind], local = kind === 'song' ? songBlob : videoBlob, loaded = kind === 'song' ? !!audio.src : videoOK;
+    if (uploads[kind]) return `${label}: uploading… ${Math.round(uploads[kind].p * 100)}%`;
+    if (m) return `${label}: ✓ online (${(m.size / 1048576).toFixed(1)} MB)`;
+    if (local) return `${label}: only on this device <button class="btn sm" data-upload="${kind}">Upload</button>`;
+    return `${label}: ${loaded ? 'only on this device' : 'none yet'}`;
+  };
+  cel.cloudFiles.innerHTML = line('song', 'Song') + '<br>' + line('video', 'Rehearsal video');
+}
+let qrLib = null;
+function loadQrLib(){
+  if (!qrLib) qrLib = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+    s.onload = () => res(window.qrcode); s.onerror = rej;
+    document.head.appendChild(s);
+  });
+  return qrLib;
+}
+function openCloudDialog(){
+  cel.cloudOff.hidden = !!cloud; cel.cloudOn.hidden = !cloud;
+  if (!cloud) {
+    const ok = canCloud();
+    cel.cloudWhere.hidden = ok;
+    cel.goOnline.disabled = !ok;
+    if (!ok) cel.cloudWhere.innerHTML = `Saving online works on the hosted site, <a href="${HOSTED_URL}" target="_blank" rel="noopener">${HOSTED_URL.replace('https://', '')}</a>. To move this routine there, click <b>Export</b> here, then <b>Import</b> it on the site and load the song and video again.`;
+  } else {
+    cel.editLink.value = editUrl();
+    renderCloudFiles();
+    cel.qr.innerHTML = ''; cel.qrHint.hidden = true;
+    loadQrLib().then(q => {
+      const qr = q(0, 'M'); qr.addData(editUrl()); qr.make();
+      cel.qr.innerHTML = qr.createSvgTag({cellSize:4, margin:3});
+      const svg = cel.qr.querySelector('svg'); if (svg) { svg.style.background = '#fff'; svg.style.borderRadius = '8px'; }
+      cel.qrHint.hidden = false;
+    }).catch(() => {});
+  }
+  if (!cel.cloudDlg.open) cel.cloudDlg.showModal();
+}
+async function goOnline(){
+  cel.goOnline.disabled = true; cel.goOnline.textContent = 'Saving…';
+  try {
+    routine.media = { song:null, video:null };
+    const res = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({kind:'dance', data:routine}) });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || res.status);
+    cloud = { id:body.id, key:body.key, version:body.version, dirty:false };
+    cloudState = 'ok';
+    songMediaId = null; videoMediaId = null;
+    saveCloudLocal(); showCloud();
+    history.replaceState(null, '', editUrl());
+    if (songBlob) queueUpload('song');
+    if (videoBlob) queueUpload('video');
+    openCloudDialog();
+  } catch (e) {
+    toast('Could not save online: ' + e.message);
+  } finally {
+    cel.goOnline.disabled = false; cel.goOnline.textContent = 'Save online';
+  }
+}
+function disconnect(silent){
+  cloud = null; clearTimeout(pushTimer);
+  saveCloudLocal(); showCloud();
+  if (location.hash.startsWith('#edit=')) history.replaceState(null, '', location.pathname + location.search);
+  if (cel.cloudDlg.open) cel.cloudDlg.close();
+  if (!silent) toast('Stopped syncing on this device. The online copy and its link still work');
+}
+cel.cloudBtn.addEventListener('click', openCloudDialog);
+cel.cloudCancel.addEventListener('click', () => cel.cloudDlg.close());
+cel.goOnline.addEventListener('click', goOnline);
+cel.unlink.addEventListener('click', () => disconnect(false));
+cel.copyLink.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(cel.editLink.value); toast('Link copied'); }
+  catch (e) { cel.editLink.select(); toast('Press Ctrl+C to copy the link'); }
+});
+cel.cloudFiles.addEventListener('click', e => { const b = e.target.closest('[data-upload]'); if (b) queueUpload(b.dataset.upload); });
+setInterval(() => pull(false), 20000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) pull(false); });
+window.addEventListener('pagehide', () => {
+  if (!cloud || !cloud.dirty) return;
+  fetch(`${API}/${cloud.id}`, {
+    method:'PUT', keepalive:true, headers:{ Authorization:`Bearer ${cloud.key}`, 'Content-Type':'application/json' },
+    body: JSON.stringify({ version:cloud.version, data:routine }),
+  }).catch(() => {});
+});
+window.addEventListener('beforeunload', e => { if (Object.keys(uploads).length) { e.preventDefault(); e.returnValue = ''; } });
+
+/* theme changes → recolor canvas */
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors); } catch (e) {}
+
+/* ---------- boot ---------- */
+try { if (localStorage.getItem(STORE_KEY + '.snap') === '0') el.snap.checked = false; } catch (e) {}
+readColors();
+applyRoutineToUI();
+syncPlayBtn();
+renderAll();
+requestAnimationFrame(tick);
+// which online routine (if any) this device follows: an #edit= link wins over the remembered one
+{
+  const hm = location.hash.match(/^#edit=([\w-]{16})\.([\w-]{20,40})$/);
+  let stored = null;
+  try { stored = JSON.parse(localStorage.getItem(CLOUD_KEY)); } catch (e) {}
+  if (hm && canCloud()) cloud = stored && stored.id === hm[1] ? Object.assign(stored, {key:hm[2]}) : {id:hm[1], key:hm[2], version:0, dirty:false};
+  else if (stored && stored.id && stored.key && canCloud()) cloud = stored;
+  if (cloud) { saveCloudLocal(); history.replaceState(null, '', editUrl()); }
+  showCloud();
+}
+const openedFromLink = !!cloud && cloud.version === 0;
+mediaReady = (async () => {
+  try {
+    const rec = await idbGet('audio');
+    if (rec && rec.blob) await loadAudio(rec.blob, rec.name, false, rec.mediaId || null);
+    else if (!localStorage.getItem(STORE_KEY) && !openedFromLink) el.help.showModal();
+  } catch (e) {}
+  try {
+    const vrec = await idbGet('video');
+    if (vrec && vrec.blob) await loadVideo(vrec.blob, vrec.name, false, vrec.mediaId || null);
+  } catch (e) {}
+})();
+if (cloud) {
+  if (cloud.dirty) push(); else pull(true);
+}
+})();
+</script>
+</body>
+</html>
