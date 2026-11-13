@@ -1,0 +1,14 @@
+# Songs and videos stay local (they sync through the app, not the repo)
+*.wav
+*.mp3
+*.m4a
+*.aac
+*.flac
+*.ogg
+*.opus
+*.mp4
+*.mov
+*.m4v
+*.webm
+*.mkv
+*.avi
